@@ -39,3 +39,81 @@
 					(qsort pred (partition ls (lambda (x) (pred x pivot))))
 					(partition ls (lambda (x) (equal? x pivot))))
 					(qsort pred (partition ls (lambda (x) (pred pivot x))))))))
+
+(define (is-in-all? node ls)
+	(and (andmap (lambda (x)
+		(member (car node) (cadr x))) (remove node ls)) #t))
+
+(define (connected? ls)
+	(or (null? (cdr ls))
+		(and (andmap (lambda (n)
+				(is-in-all? n ls)) ls) #t)))
+
+(define (reverse-it ls)
+	(define (rev ls newlist)
+		(if (null? ls)
+			newlist
+			(rev (cdr ls) (cons (car ls) newlist))))
+	(rev ls '()))
+
+(define (empty-BST)
+	'())
+
+(define (empty-BST? obj)
+	(null? obj))
+
+
+(define (BST-insert num bst)
+	(if (null? bst)
+		(list num '() '())
+		(cond
+			((< num (car bst))
+				(list (car bst) (BST-insert num (cadr bst)) (caddr bst)))
+			((> num (car bst)) (list (car bst) (cadr bst) (BST-insert num (caddr bst))))
+			((= num (car bst)) bst))))
+
+(define (BST-util? obj smallest largest)
+		(and (list? obj)
+			(or (empty-BST? obj)
+				(and (number? (car obj))
+					 (= 3 (length obj))
+					 (list? (cadr obj))
+					 (list? (caddr obj))
+					 (> (car obj) smallest)
+					 (< (car obj) largest)
+					 (BST-util? (cadr obj) smallest (car obj))
+					 (BST-util? (caddr obj) (car obj) largest)))))
+
+(define (BST? obj)
+	(and (list? obj)
+		(or (empty-BST? obj)
+			(and (number? (car obj))
+				 (= 3 (length obj))
+				 (list? (cadr obj))
+				 (list? (caddr obj))
+				 (BST-util? (cadr obj) -999999 (car obj)) 
+				 (BST-util? (caddr obj) (car obj) 999999)))))
+
+(define (BST-element bst)
+	(car bst))
+(define (BST-left bst)
+	(cadr bst))
+(define (BST-right bst)
+	(caddr bst))
+
+(define (BST-insert-nodes bst nums)
+	(if (null? nums)
+		bst
+		(BST-insert-nodes (BST-insert (car nums) bst) (cdr nums))))
+
+(define (BST-contains? bst num)
+	(cond
+		((null? bst) #f)
+		((= (car bst) num) #t)
+		((< (car bst) num) (BST-contains? (caddr bst) num))
+		((> (car bst) num) (BST-contains? (cadr bst) num))))
+
+(define (BST-inorder bst)
+	(if (null? bst)
+		'()
+		(append (BST-inorder (BST-left bst)) (cons (car bst) (BST-inorder (BST-right bst))))))
