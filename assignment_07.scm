@@ -40,14 +40,29 @@
 					(partition ls (lambda (x) (equal? x pivot))))
 					(qsort pred (partition ls (lambda (x) (pred pivot x))))))))
 
-(define (is-in-all? node ls)
-	(and (andmap (lambda (x)
-		(member (car node) (cadr x))) (remove node ls)) #t))
+(define (get-nodes nodes ls)
+	(define (get-node s ls)
+		(if (equal? s (caar ls))
+			(car ls)
+			(get-node s (cdr ls))))
+	(map (lambda (x) (get-node x ls)) (cadr nodes)))
+
+(define (check v ls)
+	(if (null? ls)
+		#t
+		(if (member (car ls) v)
+			(check v (cdr ls))
+			#f)))
 
 (define (connected? ls)
-	(or (null? (cdr ls))
-		(and (andmap (lambda (n)
-				(is-in-all? n ls)) ls) #t)))
+	(let dfs ([stack (list (car ls))] [visited '()])
+		(if (null? stack) ; we're done
+			(check visited ls)
+			(let ([n (car stack)])
+				(if (member n visited)
+					(dfs (cdr stack) visited)
+					(dfs (append (get-nodes n ls) stack) (cons n visited)))))))
+
 
 (define (reverse-it ls)
 	(define (rev ls newlist)
@@ -117,3 +132,35 @@
 	(if (null? bst)
 		'()
 		(append (BST-inorder (BST-left bst)) (cons (car bst) (BST-inorder (BST-right bst))))))
+
+(define (map-by-position fn-list arg-list)
+	(map (lambda (x y) (x y)) fn-list arg-list))
+
+(define (bt-leaf-sum T)
+	(let sum ([E T] [accum 0])
+		(cond
+			((number? E) (+ accum T))
+			((list? E) (+ accum (bt-leaf-sum (cadr E)) (bt-leaf-sum (caddr E)))))))
+
+(define (bt-inorder-list T)
+	(cond
+		((number? T) '())
+		((list? T) (append (bt-inorder-list (cadr T)) (cons (car T) (bt-inorder-list (caddr T)))))))
+
+(define (bt-max T)
+	(if (number? T) T
+	(let get-max ([E T] [largest -99999])
+		(cond
+			((and (number? E) (> E largest)) E)
+			((number? E) largest)
+			((list? E) (max (get-max (cadr E) largest) (get-max (caddr E) largest)))))))
+
+;(define (bt-max-interior T)
+;	(let get-max-sym ([max-pair]
+;	(define (get-max-sym a b s1 s2)
+;		(if (> a b) s1 s2))
+;	(cond
+;		((and (number? (cadr T)) (number? (caddr T))) (car T))
+;		((and (number? (cadr T)) (list? (caddr T))) (get-max-sym (cadr T) (bt-leaf-sum (caddr T)) (car T) (caaddr T)))
+;		((and (list? (cadr T)) (number? (caddr T))) (get-max-sym (bt-leaf-sum (cadr T)) (caddr T) (caadr T) (car T)))
+;		(else (get-max-sym (bt-leaf-sum (cadr T)) (bt-leaf-sum (caddr T)) (caadr T) (caaddr T)))))
