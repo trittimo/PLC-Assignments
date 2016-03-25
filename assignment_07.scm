@@ -155,12 +155,40 @@
 			((number? E) largest)
 			((list? E) (max (get-max (cadr E) largest) (get-max (caddr E) largest)))))))
 
-;(define (bt-max-interior T)
-;	(let get-max-sym ([max-pair]
-;	(define (get-max-sym a b s1 s2)
-;		(if (> a b) s1 s2))
-;	(cond
-;		((and (number? (cadr T)) (number? (caddr T))) (car T))
-;		((and (number? (cadr T)) (list? (caddr T))) (get-max-sym (cadr T) (bt-leaf-sum (caddr T)) (car T) (caaddr T)))
-;		((and (list? (cadr T)) (number? (caddr T))) (get-max-sym (bt-leaf-sum (cadr T)) (caddr T) (caadr T) (car T)))
-;		(else (get-max-sym (bt-leaf-sum (cadr T)) (bt-leaf-sum (caddr T)) (caadr T) (caaddr T)))))
+(define n? number?) (define l? list?)
+
+(define (biggest a b) (if (> (cadr a) (cadr b)) a b))
+
+(define (larger a b sym)
+	(cond
+		((and (n? a) (l? b))
+			(if (> (+ a (cadr b)) (cadr b))
+				(list sym (+ a (cadr b)))
+				b))
+		((and (l? a) (n? b))
+			(if (> (+ (cadr a) b) (cadr a))
+				(list sym (+ (cadr a) b))
+				a))
+		(else
+			(if (> (+ (cadr a) (cadr b)) (cadr (biggest a b)))
+				(list sym (+ (cadr a) (cadr b)))
+				(biggest a b)))))
+
+(define (bt-max-interior T)
+	(define (max-rec t h)
+		(cond
+			((n? t) (list h t))
+			((and (n? (cadr t)) (n? (caddr t)))
+				(list (car t) (+ (cadr t) (caddr t))))
+			((and (l? (cadr t)) (n? (caddr t)))
+				(larger (max-rec (cadr t) h) (caddr t) (car t)))
+			((and (n? (cadr t)) (l? (caddr t)))
+				(larger (cadr t) (max-rec (caddr t) h) (car t)))
+			(else (larger (max-rec (cadr t) h) (max-rec (caddr t) h) (car t)))))
+	(cond
+		((and (n? (cadr T)) (n? (caddr T))) (car T))
+		((and (n? (cadr T)) (l? (caddr T))) (car (max-rec (caddr T) (car (caddr T)))))
+		((and (l? (cadr T)) (n? (caddr T))) (car (max-rec (cadr T) (car (cadr T)))))
+		(else
+			(let ([l (max-rec (cadr T) (car (cadr T)))] [r (max-rec (caddr T) (car (caddr T)))])
+				(if (>= (cadr l) (cadr r)) (car l) (car r))))))
