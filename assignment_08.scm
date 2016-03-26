@@ -35,3 +35,23 @@
 		((null? ls) '())
 		((null? (cdr ls)) (list (list (car ls))))
 		(else (cons (list (car ls) (cadr ls)) (group-by-two (cddr ls))))))
+
+(define (group-by-n ls n)
+	(if (null? ls) '()
+	(reverse (fold-right (lambda (next groups)
+		(if (< (length (car groups)) n)
+			(cons (append (car groups) (list next)) (cdr groups))
+			(cons (list next) groups))) '(()) (reverse ls)))))
+
+(define (subst-helper new old slist comp)
+	(fold-left (lambda (data next) (let ((done (car data)) (ls (cadr data)))
+		(cond
+			(done (list #t (append ls (list next))))
+			((list? next)
+				(let ((result (subst-helper new old next comp)))
+					(list (car result) (append ls (list (cadr result))))))
+			((comp old next) (list #t (append ls (list new))))
+			(else (list #f (append ls (list next))))))) '(#f ()) slist))
+
+(define (subst-leftmost new old slist comp)
+	(cadr (subst-helper new old slist comp)))
