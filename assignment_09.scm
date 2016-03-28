@@ -96,5 +96,5 @@
 			(let ((top (stack 'pop)))
 				(cond
 					((null? top) (iter))
-					((list? top) (stack 'push (cdr top)) (stack 'push (car top)) (iter))
+					((list? top) (begin (stack 'push (cdr top)) (stack 'push (car top)) (iter)))
 					(else top))))))) iter))
