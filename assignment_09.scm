@@ -1,48 +1,100 @@
+; Problem 1
+(define (sn-list-recur base listproc symproc)
+	(define (helper ls)
+		(cond
+			((null? ls) base)
+			((list? (car ls)) (listproc (helper (car ls)) (helper (cdr ls))))
+			(else (symproc (car ls) (helper (cdr ls))))))
+	helper)
+
+; Problem 1a
 (define (sn-list-sum snlist)
-	(fold-left (lambda (accum next)
-		(if (list? next) (+ accum (sn-list-sum next)) (+ accum next))) 
-	0 snlist))
+	((sn-list-recur 0 + +) snlist))
 
-(define (sn-list-map proc snlst)
-	(fold-right (lambda (next new)
-		(if (list? next)
-			(cons (sn-list-map proc next) new)
-			(cons (proc next) new))) '() snlst))
+; Problem 1b
+(define (sn-list-map proc snlist)
+	((sn-list-recur '()
+		(lambda (x y) (cons x y))
+		(lambda (x y) (cons (proc x) y))) snlist))
 
+; Problem 1c
 (define (sn-list-paren-count snlst)
-	(+ 2 (fold-left (lambda (accum next)
-		(if (list? next) (+ accum (sn-list-paren-count next)) accum)) 0 snlst)))
+	((sn-list-recur 2
+		+
+		(lambda (x y) y)) snlst))
 
+; Problem 1d
 (define (sn-list-reverse snlst)
-	(fold-left (lambda (new next)
-		(if (list? next) (cons (sn-list-reverse next) new) (cons next new))) '() snlst))
+	((sn-list-recur '()
+		(lambda (x y) (append y (list x)))
+		(lambda (x y) (append y (list x)))) snlst))
 
+; Problem 1e
 (define (sn-list-occur s snlst)
-	(fold-left (lambda (count next)
+	((sn-list-recur 0 + (lambda (x y) (if (eq? x s) (+ 1 y) y))) snlst))
+
+; Problem 1f
+(define (sn-list-depth snlst)
+	((sn-list-recur 1
+		(lambda (x y) (max (+ 1 x) y))
+		(lambda (x y) y)) snlst))
+
+; Problem 2
+(define (bt-recur proc)
+	(define (helper ls)
 		(cond
-			((list? next) (+ count (sn-list-occur s next)))
-			((eq? s next) (add1 count))
-			(else count))) 0 snlst))
+			((and (list? (cadr ls)) (list? (caddr ls))) (proc (car ls) (helper (cadr ls)) (helper (caddr ls))))
+			((list? (cadr ls)) (proc (car ls) (helper (cadr ls)) (caddr ls)))
+			((list? (caddr ls)) (proc (car ls) (cadr ls) (helper (caddr ls))))
+			(else (proc (car ls) (cadr ls) (caddr ls)))))
+	helper)
 
-(define (sn-list-depth slist)
-	(cond
-		((number? slist) 0)
-		((symbol? slist) 0)
-		((null? slist) 1)
-		((list? slist) 
-		(+ 1 (apply max (map sn-list-depth slist))))))
-
-(define (bt-recur proc bt)
-	(let ((left (cadr bt)) (right (caddr bt)) (node (car bt)))
-		(cond
-			((and (list? left) (list? right)) (list (bt-recur proc left) (bt-recur proc right)))
-			((list? left) (list (bt-recur proc left) (proc right)))
-			((list? right) (list (proc left) (bt-recur proc right)))
-			(else (list (proc left) (proc right))))))
-
+; Problem 2a
 (define (bt-sum bt)
 	(if (number? bt) bt
-		(sn-list-sum (bt-recur (lambda (x) x) bt))))
+	((bt-recur (lambda (s l r) (+ l r))) bt)))
 
-;(define (bt-inorder bt)
-;	
+; Problem 2b
+(define (bt-inorder bt)
+	(if (or (symbol? bt) (number? bt)) '()
+		((bt-recur (lambda (s l r)
+			(cond ((and (number? l) (number? r)) (list s))
+				((number? l) (cons s r))
+				((number? r) (append l (list s)))
+				(else (append l (cons s r)))))) bt)))
+
+; Problem 3 helper
+(define compose
+	(case-lambda
+		(() (lambda (x) x))
+		((first . rest)
+		(let ((composed-rest (apply compose rest)))
+		(lambda (x) (first (composed-rest x)))))))
+
+
+; Problem 3
+(define (make-c...r s)
+	(apply compose (map eval (map (lambda (x) (if (eq? #\a x) 'car 'cdr)) (string->list s)))))
+
+; Problem 4 helper
+(define (make-stack)
+		(let ((stk '()))
+			(lambda (msg . args)
+				(case msg
+					((empty?) (null? stk))
+					((push) (set! stk (cons (car args) stk)))
+					((pop) (let ((top (car stk)))
+						(set! stk (cdr stk)) top))
+					(else (errorf 'stack "illegal message to stack object: ~a" msg))))))
+
+; Problem 4
+(define (make-slist-leaf-iterator slist)
+	(define (makestack)
+		(let ((s (make-stack))) (s 'push slist) s))
+	(letrec ((stack (makestack)) (iter (lambda ()
+		(if (stack 'empty?) #f
+			(let ((top (stack 'pop)))
+				(cond
+					((null? top) (iter))
+					((list? top) (stack 'push (cdr top)) (stack 'push (car top)) (iter))
+					(else top))))))) iter))
