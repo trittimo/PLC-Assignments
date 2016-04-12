@@ -73,3 +73,39 @@
 		((eq? (car exp) 'set!) #f)
 		(else (or (occurs-bound? var (car exp))
 				(occurs-bound? var (cadr exp))))))
+
+; Problem 3
+(define (lexical-address exp)
+	(define (replace-bound var varlist)
+		(cond
+			((null? varlist) (list ': 'free var))
+			((eq? var (caar varlist)) (cons ': (cdar varlist)))
+		(else (replace-bound var (cdr varlist)))))
+
+	(define (get-index x ls)
+		(if (eq? x (car ls)) 0 (+ 1 (get-index x (cdr ls)))))
+
+	(define (increment except varlist original)
+		(cond
+			((null? varlist) (map (lambda (x) (list x 0 (get-index x original))) except))
+			((member (caar varlist) except) 
+				(cons (list (caar varlist) 0 (get-index (caar varlist) original)) 
+					(increment (remove (caar varlist) except) (cdr varlist) original)))
+			(else (cons (list (caar varlist) (+ 1 (cadar varlist)) (caddar varlist)) (increment except (cdr varlist) original)))))
+
+	(define (helper exp varlist)
+		(cond
+			((symbol? exp) (replace-bound exp varlist))
+			((eq? (car exp) 'lambda)
+				(list 'lambda (cadr exp) (helper (caddr exp) (increment (cadr exp) varlist (cadr exp)))))
+			((eq? (car exp) 'let)
+				(list 'let 
+				(map (lambda (x) (list (car x) (helper (cadr x) varlist))) (cadr exp))
+				(helper (caddr exp) (increment (map car (cadr exp)) varlist (map car (cadr exp))))))
+			((eq? (car exp) 'if)
+				(append (list 'if) (map (lambda (x) (helper x varlist)) (cdr exp))))
+			((eq? (car exp) 'set!)
+				(append (list 'set! (cadr exp)) (list (helper (caddr exp) varlist))))
+			(else (map (lambda (x) (helper x varlist)) exp))))
+
+	(helper exp '()))
