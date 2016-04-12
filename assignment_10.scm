@@ -105,7 +105,7 @@
 			((eq? (car exp) 'if)
 				(cons 'if (map (lambda (x) (helper x varlist)) (cdr exp))))
 			((eq? (car exp) 'set!)
-				(append (list 'set! (cadr exp)) (list (helper (caddr exp) varlist))))
+				(list 'set! (cadr exp) (helper (caddr exp) varlist)))
 			(else (map (lambda (x) (helper x varlist)) exp))))
 
 	(helper exp '()))
