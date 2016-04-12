@@ -109,3 +109,28 @@
 			(else (map (lambda (x) (helper x varlist)) exp))))
 
 	(helper exp '()))
+
+; Problem 4
+(define (un-lexical-address exp)
+	(define (helper exp varlist)
+		(cond
+			((symbol? exp) exp)
+			((eq? (car exp) 'lambda)
+				(append (list 'lambda (cadr exp)) (helper (cddr exp) (cons (cadr exp) varlist))))
+			((eq? (car exp) 'let)
+				(list 
+					'let 
+					(map (lambda (x) (list (car x) (helper (cadr x) varlist))) (cadr exp)) 
+					(helper (caddr exp) (cons (map car (cadr exp)) varlist))))
+			((eq? (car exp) 'if)
+				(cons 'if (map (lambda (x) (helper x varlist)) (cdr exp))))
+			((eq? (car exp) 'set!) 
+				(cons 'set! (map (lambda (x) (helper x varlist)) (cdr exp))))
+			((eq? (car exp) ':)
+						(if (eq? (cadr exp) 'free)
+							(caddr exp)
+							(list-ref (list-ref varlist (cadr exp)) (caddr exp))))
+			(else
+				(map (lambda (x) (helper x varlist)) exp))))
+			
+	(helper exp '()))
