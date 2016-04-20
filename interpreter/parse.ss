@@ -1,105 +1,8 @@
-(load "chez-init.ss")
+; This is a parser for simple Scheme expressions, such as those in EOPL, 3.1 thru 3.3.
 
+; You will want to replace this with your parser that includes more expression types, more options for these types, and error-checking.
 
-; Problem 1a
-(define-syntax my-let
-	(syntax-rules ()
-		((_ ((x v) ...) e1 e2 ...) ; an expression of This form...
-			((lambda (x ...) e1 e2 ...) v ...))
-		((_ name ((x v) ...) e1 e2 ...)
-			(letrec ((name (lambda (x ...) e1 e2 ...))) (name v ...)))
-		)) ; is expanded To This
-
-; Problem 1b
-(define-syntax my-or
-	(syntax-rules ()
-		((_) #f)
-		((_ x) x)
-		((_ x y ...) (let ((a x)) (if a a (my-or y ...))))))
-
-; Problem 1c
-(define-syntax +=
-	(syntax-rules ()
-		((_ x y) (begin (set! x (+ x y)) x))))
-
-; Problem 1d
-(define-syntax return-first
-	(syntax-rules ()
-		((_ x y ...) (begin (let ((a x)) y ... a)))))
-
-; Problem #2 Helper
-; from EoPL, page 50
-(define-datatype bintree bintree?
-	(leaf-node (num integer?))
-	(interior-node (key symbol?) (left-tree bintree?) (right-tree bintree?)))
-
-; Problem #2
-(define (bintree-to-list Tree)
-	(cases bintree Tree
-		(leaf-node (datum) (list 'leaf-node datum))
-		(interior-node (key left right) (list 'interior-node key (bintree-to-list left) (bintree-to-list right)))))
-
-; Problem 3 helper
-(define (biggest a b) (if (> (cadr a) (cadr b)) a b))
-
-; Problem 3 helper
-(define (larger a b sym)
-	(cond
-		((and (number? a) (list? b))
-			(if (> (+ a (cadr b)) (cadr b))
-				(list sym (+ a (cadr b)))
-				b))
-		((and (list? a) (number? b))
-			(if (> (+ (cadr a) b) (cadr a))
-				(list sym (+ (cadr a) b))
-				a))
-		(else
-			(if (> (+ (cadr a) (cadr b)) (cadr (biggest a b)))
-				(list sym (+ (cadr a) (cadr b)))
-				(biggest a b)))))
-
-; Problem 3 helper
-(define (max-rec T h)
-		(cases bintree T
-			(leaf-node (datum) (list h datum))
-			(interior-node (key left right)
-				(cond
-					((and (number? (cadr left)) (number? (cadr right)))
-						(list key (+ (cadr left) (cadr right))))
-					((number? (cadr right))
-						(larger (max-rec left h) (cadr right) key))
-					((number? (cadr left))
-						(larger (cadr left) (max-rec right h) key))
-					(else (larger (max-rec left h) (max-rec right h) key))))))
-
-; Problem 3
-(define (max-interior T)
-	(cases bintree T
-		(leaf-node (datum) #f)
-		(interior-node (key left right)
-			(cond
-				((and (number? (cadr left)) (number? (cadr right))) key)
-				((number? (cadr left)) (car (max-rec right (cadr right))))
-				((number? (cadr right)) (car (max-rec left (cadr left))))
-				(else
-					(let ((l (max-rec left (cadr left))) (r (max-rec right (cadr right))))
-						(if (>= (cadr l) (cadr r)) (car l) (car r))))))))
-
-; Everything below here is problem 4
-(define-datatype expression expression?
-	(set!-exp (id symbol?) (assignment expression?))
-	(named-let-exp (id symbol?) (assigned list?) (bodies list?))
-	(letrec-exp (assigned list?) (bodies list?))
-	(let*-exp (assigned list?) (bodies list?))
-	(let-exp (assigned list?) (bodies list?))
-	(empty-exp)
-	(if-exp (comp expression?) (true expression?) (false expression?))
-	(lit-exp (num (lambda (x) (or (number? x) (boolean? x) (symbol? x) (string? x) (list? x) (vector? x)))))
-	(var-exp (id symbol?))
-	(lambda-exp (los (lambda (x) (or (list? x) (pair? x) (symbol? x)))) (body list?))
-	(app-exp (rator expression?) (rand (lambda (x) (andmap expression? x)))))
-
-
+; Procedures to make the parser a little bit saner.
 (define 1st car)
 (define 2nd cadr)
 (define 3rd caddr)
@@ -211,3 +114,12 @@
 		(lambda-exp (los body) (append (list 'lambda los) (map unparse-exp body)))
 		(app-exp (rator rand) 
 			(cons (unparse-exp rator) (map unparse-exp rand)))))
+
+
+
+
+
+
+
+
+
