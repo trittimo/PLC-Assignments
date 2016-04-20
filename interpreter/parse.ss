@@ -20,7 +20,7 @@
 		((pair? datum)
 			(cond
 				((eqv? (1st datum) 'quote)
-					(lit-exp datum))
+					(lit-exp (2nd datum)))
 				((eqv? (1st datum) 'lambda)
 					(cond
 						((< (length datum) 3) (eopl:error 'parse-exp (format "incorrect number of arguments in lambda: ~s" datum)))
