@@ -297,7 +297,7 @@
 ; TODO Extend this to use make c...r from previous assignment
 (define *prim-proc-names* '(+ - * / add1 sub1 cons = not zero? list procedure? null? 
 									>= <= > < eq? equal? length list->vector list? pair? 
-									vector->list number? cdr cadr car caar cadar symbol? vector? ))
+									vector->list number? cdr cadr car caar cadar symbol? vector? display ))
 
 (define init-env         ; for now, our initial global environment only contains 
 	(extend-env            ; procedure names.  Recall that an environment associates
@@ -337,7 +337,12 @@
 			[(not) (not (1st args))]
 			[(zero?) (zero? (1st args))]
 			[(list) args]
-			[(procedure?) (procedure? (1st args))]
+			[(procedure?)
+				(cond
+					[(not (list? (1st args))) #f]
+					[(eq? (caar args) 'prim-proc) (exists (lambda (x) (eq? x (cadar args))) *prim-proc-names*)]
+					[else (eq? (caar args) 'closure)])]
+			[(display) (display (1st args))]
 			[(null?) (null? (1st args))]
 			[(>=) (>= (1st args) (2nd args))]
 			[(<=) (<= (1st args) (2nd args))]
