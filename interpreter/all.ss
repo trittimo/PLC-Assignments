@@ -265,8 +265,7 @@
 			[lambda-exp (params bodies)
 				(closure params bodies env)]
 			[let-exp (assigned bodies)
-				(begin (display (map car assigned))
-				(eval-bodies bodies (extend-env (map car assigned) (eval-rands (map cadr assigned) env) env)))]
+				(eval-bodies bodies (extend-env (map car assigned) (eval-rands (map cadr assigned) env) env))]
 			[else (eopl:error 'eval-exp "Bad abstract syntax: ~a" exp)])))
 
 ; evaluate the list of operands, putting results into a list
