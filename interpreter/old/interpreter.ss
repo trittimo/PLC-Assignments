@@ -3,33 +3,37 @@
 (define top-level-eval
 	(lambda (form)
 		; later we may add things that are not expressions.
-		(eval-exp form)))
+		(eval-exp form init-env)))
 
 ; eval-exp is the main component of the interpreter
 
 (define eval-exp
-	(lambda (exp)
+	(lambda (exp env)
 		(cases expression exp
-			[if-exp (comp true false) (if (eval-exp comp) (eval-exp true) (eval-exp false))]
+			[if-exp (comp true false) (if (eval-exp comp env) (eval-exp true env) (eval-exp false env))]
 			[lit-exp (datum) datum]
 			[var-exp (id)
-				(apply-env init-env id; look up its value.
-					 (lambda (x) x) ; procedure to call if id is in the environment 
-					 (lambda () (eopl:error 'apply-env ; procedure to call if id not in env
-							"variable not found in environment: ~s"
-				 id)))] 
+				(apply-env env id
+					(lambda (x) x)
+					(lambda ()
+						(apply-env global-env id (lambda (x) x) 
+							(lambda () (error 'apply-env "variable ~s is not bound" id)))))]
 			[app-exp (rator rands)
-				(let ([proc-value (eval-exp rator)]
-							[args (eval-rands rands)])
+				(let ([proc-value (eval-exp rator env)]
+							[args (eval-rands rands env)])
 					(apply-proc proc-value args))]
-			[lambda-exp (los body) 'fuck] ; TODO
+			[lambda-exp (params bodies)
+				(closure params bodies env)]
+			[let-exp (assigned bodies)
+				(begin (display (map car assigned))
+				(eval-bodies bodies (extend-env (map car assigned) (eval-rands (map cadr assigned) env) env)))]
 			[else (eopl:error 'eval-exp "Bad abstract syntax: ~a" exp)])))
 
 ; evaluate the list of operands, putting results into a list
 
 (define eval-rands
-	(lambda (rands)
-		(map eval-exp rands)))
+	(lambda (rands env)
+		(map (lambda (x) (eval-exp x env)) rands)))
 
 ;  Apply a procedure to its arguments.
 ;  At this point, we only have primitive procedures.  
@@ -39,11 +43,18 @@
 	(lambda (proc-value args)
 		(cases proc-val proc-value
 			[prim-proc (op) (apply-prim-proc op args)]
-			; You will add other cases
-			[else (error 'apply-proc
-									 "Attempt to apply bad procedure: ~s" 
-										proc-value)])))
+			[closure (params bodies env) (eval-bodies bodies (extend-env params args env))]
+			[else (error 'apply-proc "Attempt to apply bad procedure: ~s" proc-value)])))
 
+(define (eval-bodies bodies env)
+	(let loop ([bodies bodies])
+		(if (null? (cdr bodies))
+			(eval-exp (car bodies) env)
+			(begin
+				(eval-exp (car bodies) env)
+				(loop (cdr bodies))))))
+
+; TODO Extend this to use make c...r from previous assignment
 (define *prim-proc-names* '(+ - * / add1 sub1 cons = not zero? list procedure? null? 
 									>= <= > < eq? equal? length list->vector list? pair? 
 									vector->list number? cdr cadr car caar cadar symbol? vector? ))
@@ -55,9 +66,12 @@
 					*prim-proc-names*)
 		 (empty-env)))
 
+(define global-env init-env)
+
 ; Usually an interpreter must define each 
 ; built-in procedure individually.  We are "cheating" a little bit.
 
+; TODO Extend to use make c...r
 (define apply-prim-proc
 	(lambda (prim-proc args)
 		(case prim-proc
@@ -72,10 +86,10 @@
 			[(vector->list) (vector->list (1st args))]
 			[(pair?) (pair? (1st args))]
 			[(list?) (list? (1st args))]
-			[(+) (+ (1st args) (2nd args))]
-			[(-) (- (1st args) (2nd args))]
-			[(*) (* (1st args) (2nd args))]
-			[(/) (/ (1st args) (2nd args))]
+			[(+) (apply + args)]
+			[(-) (apply - args)]
+			[(*) (apply * args)]
+			[(/) (apply / args)]
 			[(add1) (+ (1st args) 1)]
 			[(sub1) (- (1st args) 1)]
 			[(cons) (cons (1st args) (2nd args))]

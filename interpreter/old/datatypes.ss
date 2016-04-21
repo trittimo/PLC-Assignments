@@ -14,15 +14,6 @@
 	(lambda-exp (los (lambda (x) (or (list? x) (pair? x) (symbol? x)))) (body list?))
 	(app-exp (rator expression?) (rand (lambda (x) (andmap expression? x)))))
 	
-; datatype for procedures.  At first there is only one
-; kind of procedure, but more kinds will be added later.
-
-(define-datatype proc-val proc-val?
-	[prim-proc
-	 (name symbol?)])
-	 
-	 
-	
 ;; environment type definitions
 
 (define scheme-value?
@@ -31,6 +22,12 @@
 (define-datatype environment environment?
 	(empty-env-record)
 	(extended-env-record
-	 (syms (list-of symbol?))
+	 (syms (list-of scheme-value?))
 	 (vals (list-of scheme-value?))
 	 (env environment?)))
+
+; datatype for procedures.  At first there is only one
+; kind of procedure, but more kinds will be added later.
+(define-datatype proc-val proc-val?
+	[prim-proc (name symbol?)]
+	[closure (params (list-of symbol?)) (bodies (list-of expression?)) (env environment?)])
