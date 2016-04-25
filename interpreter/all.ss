@@ -40,7 +40,7 @@
 ; kind of procedure, but more kinds will be added later.
 (define-datatype proc-val proc-val?
 	[prim-proc (name symbol?)]
-	[closure (params (list-of symbol?)) (bodies (list-of expression?)) (env environment?)])
+	[closure (params (list-of scheme-value?)) (bodies (list-of expression?)) (env environment?)])
 	 
 	
 
@@ -313,14 +313,20 @@
 
 (define (mapa proc)
 	(lambda (x)
-		(apply-proc proc x)))
+                (apply-proc proc (list x))))
+
+(define (applya proc)
+  (lambda (x y)
+		(apply-proc proc (list x))))
 
 ; TODO Extend to use make c...r
 (define apply-prim-proc
 	(lambda (prim-proc args)
 		(case prim-proc
-			[(map) (display args)]
-			[(apply) (apply (1st args) (2nd args))]
+			[(map) (map (mapa (1st args)) (2nd args))]
+			[(apply) 
+                        (display args)
+                        (apply (applya (1st args)) (2nd args))]
 			[(vector-ref) (vector-ref (1st args) (2nd args))]
 			[(set-cdr!) (set-cdr! (1st args) (2nd args))]
 			[(set-car!) (set-car! (1st args) (2nd args))]
