@@ -296,7 +296,7 @@
 ; TODO Extend this to use make c...r from previous assignment
 (define *prim-proc-names* '(+ - * / add1 sub1 cons = not zero? list procedure? null? 
 									>= <= > < eq? equal? length list->vector list? pair? 
-									vector->list number? cdr cadr car caar cadar symbol? vector? display ))
+									vector->list number? cdr cadr car caar cadar symbol? vector? display set-car! set-cdr!))
 
 (define init-env         ; for now, our initial global environment only contains 
 	(extend-env            ; procedure names.  Recall that an environment associates
@@ -314,6 +314,8 @@
 (define apply-prim-proc
 	(lambda (prim-proc args)
 		(case prim-proc
+			[(set-cdr!) (set-cdr! (1st args) (2nd args))]
+			[(set-car!) (set-car! (1st args) (2nd args))]
 			[(vector?) (vector? (1st args))]
 			[(symbol?) (symbol? (1st args))]
 			[(cdr) (cdr (1st args))]
