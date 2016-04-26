@@ -317,7 +317,7 @@
 			(let ((proc-value (eval-exp rator env))
 						(args (eval-rands rands env)))
 				(apply-proc proc-value args)))
-		(lambda-exp (params bodies)
+		(lambda-exp (params varargs bodies)
 			(closure params bodies env))
 		(let-exp (assigned bodies)
 			(eval-bodies bodies (extend-env (map car assigned) (eval-rands (map cadr assigned) env) env)))
