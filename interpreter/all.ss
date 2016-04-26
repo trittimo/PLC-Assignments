@@ -1,6 +1,31 @@
 (load "chez-init.ss") 
 
 ;-------------------+
+;					|
+;	   HELPERS		|
+;					|
+;-------------------+
+
+(define 1st car)
+(define 2nd cadr)
+(define 3rd caddr)
+(define 4th cadddr)
+
+(define (scheme-value? x) #t)
+
+(define (list-is-2-long? ls) (and (list? ls) (= (length ls) 2)))
+
+(define (get-list ls)
+	(if (pair? ls)
+		(cons (car ls) (get-list (cdr ls)))
+		'()))
+
+(define (get-last ls)
+  (if (pair? ls)
+  	(get-last (cdr ls))
+	  ls))
+
+;-------------------+
 ;                   |
 ;    DATATYPES      |
 ;                   |
@@ -24,8 +49,6 @@
 		(body list?))
 	(app-exp (rator expression?) (rand (lambda (x) (andmap expression? x)))))
 
-(define (scheme-value? x) #t)
-
 (define-datatype environment environment?
 	(empty-env-record)
 	(extended-env-record
@@ -43,23 +66,6 @@
 ;    PARSER         |
 ;                   |
 ;-------------------+
-
-(define 1st car)
-(define 2nd cadr)
-(define 3rd caddr)
-(define 4th cadddr)
-
-(define (list-is-2-long? ls) (and (list? ls) (= (length ls) 2)))
-
-(define (get-list ls)
-	(if (pair? ls)
-		(cons (car ls) (get-list (cdr ls)))
-		'()))
-
-(define (get-last ls)
-  (if (pair? ls)
-  	(get-last (cdr ls))
-	  ls))
 
 (define (parse-exp datum)
 	(cond
