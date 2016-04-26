@@ -1,9 +1,9 @@
 (load "chez-init.ss") 
 
 ;-------------------+
-;					|
-;	   HELPERS		|
-;					|
+;                   |
+;      HELPERS      |
+;                   |
 ;-------------------+
 
 ; General helpers to make thing a bit more sane
