@@ -213,7 +213,14 @@
 		((null? (cdr datum)) (car datum))
 		(else (list 'if (car datum) (and-expansion (cdr datum)) #f))))
 
-(define (cond-expansion datum) #f)
+; (cond (#t #f) (#f #t))
+; (if #t #f (if #f #t))
+(define (cond-expansion datum)
+	(cond
+		((null? datum) )
+		((eqv? (caar datum) 'else) (cdar datum))
+		(else (list (append (list 'if (caar datum) (cadar datum)) (cond-expansion (cdr datum)))))))
+
 (define (let*-expansion datum) #f)
 (define (begin-expansion datum) #f)
 (define (case-expansion datum) #f)
@@ -223,7 +230,7 @@
 		(case (1st datum)
 			((or) (or-expansion rest))
 			((and) (and-expansion rest))
-			((cond) (cond-expansion rest))
+			((cond) (car (cond-expansion rest)))
 			((let*) (let*-expansion rest))
 			((begin) (begin-expansion rest))
 			((case) (case-expansion rest)))))
