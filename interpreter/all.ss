@@ -207,8 +207,6 @@
 ;                       |
 ;-----------------------+
 
-; Environment definitions for CSSE 304 Scheme interpreter.  Based on EoPL section 2.3
-
 (define (empty-env)
 	(empty-env-record))
 
@@ -247,8 +245,6 @@
 ;                       |
 ;-----------------------
 
-
-; TODO
 
 
 ;-------------------+
@@ -317,7 +313,6 @@
 				(eval-exp (car bodies) env)
 				(loop (cdr bodies))))))
 
-; TODO Extend this to use make c...r from previous assignment
 (define *prim-proc-names* 
  	'(+ - * / add1 sub1 cons = not zero? list procedure? null? 
 	>= <= > < eq? equal? length list->vector list? pair? 
@@ -337,7 +332,6 @@
 		(car args)
 		(cons (car args) (get-apply-list (cdr args)))))
 
-; TODO Extend to use make c...r
 (define apply-prim-proc
 	(lambda (prim-proc args)
 		(case prim-proc
@@ -405,4 +399,6 @@
 ;					|
 ;-------------------+
 
+; Syntax expansion
+; Use make-c...r instead of mapping car, cadr, etc. directly
 ; Make datatype checks implementation independent (i.e. don't use (eq? (car type) 'lit-exp))
