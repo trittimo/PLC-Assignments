@@ -262,26 +262,31 @@
 	(lambda (form)
 		(eval-exp form init-env)))
 
-(define (or-eval args env)
+(define (eval-or-exp args env)
 	(cond
 		((null? args) #f)
-		((and (eqv? (caar args) 'lit-exp) (eqv? (cadar args) '#f)) (or-eval (cdr args) env))
+		((and (eqv? (caar args) 'lit-exp) (eqv? (cadar args) '#f)) (eval-or-exp (cdr args) env))
 		(else (eval-exp (car args) env))))
 
-(define (and-eval args env)
+(define (eval-and-exp args env)
 	(cond
 		((null? args) #t)
 		((null? (cdr args)) (eval-exp (car args) env))
-		((and (eqv? (caar args) 'lit-exp) (eqv? (cadar args) '#t)) (and-eval (cdr args) env))
-		((eval-exp (car args) env) (and-eval (cdr args) env))
+		((and (eqv? (caar args) 'lit-exp) (eqv? (cadar args) '#t)) (eval-and-exp (cdr args) env))
+		((eval-exp (car args) env) (eval-and-exp (cdr args) env))
 		(else #f)))
+
+(define (get-app-args paramslen args)
+	(if (= paramslen 0)
+		(list args)
+		(cons (car args) (get-app-args (sub1 paramslen) (cdr args)))))
 
 (define (eval-exp exp env)
 	(cases expression exp
 		(and-exp (args)
-			(and-eval args env))
+			(eval-and-exp args env))
 		(or-exp (args)
-			(or-eval args env))
+			(eval-or-exp args env))
 		(if-exp (comp true false) (if (eval-exp comp env) (eval-exp true env) (eval-exp false env)))
 		(lit-exp (datum) datum)
 		(var-exp (id)
@@ -291,9 +296,14 @@
 					(apply-env global-env id (lambda (x) x) 
 						(lambda () (error 'apply-env "variable ~s is not bound" id))))))
 		(app-exp (rator rands)
-			(let ((proc-value (eval-exp rator env))
-						(args (eval-rands rands env)))
-				(apply-proc proc-value args)))
+			(let ((proc-value (eval-exp rator env)) (args (eval-rands rands env)))
+					(cases proc-val proc-value
+						(prim-proc (op) (apply-proc proc-value args))
+						(closure (params varargs bodies env)
+							(cond
+								((null? varargs) (apply-proc proc-value args))
+								((null? params) (apply-proc proc-value (list args)))
+								(else (apply-proc proc-value (get-app-args (length params) args))))))))
 		(lambda-exp (params varargs bodies)
 			(closure params varargs bodies env))
 		(let-exp (assigned bodies)
@@ -306,7 +316,7 @@
 (define (apply-proc proc-value args)
 	(cases proc-val proc-value
 		(prim-proc (op) (apply-prim-proc op args))
-		(closure (params varargs bodies env) (eval-bodies bodies (extend-env params args env)))
+		(closure (params varargs bodies env) (eval-bodies bodies (extend-env (append params varargs) args env)))
 		(else (error 'apply-proc "Attempt to apply bad procedure: ~s" proc-value))))
 
 (define (eval-bodies bodies env)
