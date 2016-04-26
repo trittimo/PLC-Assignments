@@ -287,7 +287,10 @@
 			(eval-and-exp args env))
 		(or-exp (args)
 			(eval-or-exp args env))
-		(if-exp (comp true false) (if (eval-exp comp env) (eval-exp true env) (eval-exp false env)))
+		(if-exp (comp true false)
+			(cases expression false
+				(empty-exp () (if (eval-exp comp env) (eval-exp true env)))
+				(else (if (eval-exp comp env) (eval-exp true env) (eval-exp false env)))))
 		(lit-exp (datum) datum)
 		(var-exp (id)
 			(apply-env env id
@@ -332,7 +335,7 @@
 	>= <= > < eq? equal? length list->vector list? pair? 
 	vector->list number? cdr cadr car caar cadar symbol? 
 	vector? display set-car! set-cdr! map apply vector-ref
-	vector ))
+	vector vector-set! ))
 
 (define init-env (extend-env *prim-proc-names* (map prim-proc *prim-proc-names*) (empty-env)))
 
@@ -349,6 +352,7 @@
 (define apply-prim-proc
 	(lambda (prim-proc args)
 		(case prim-proc
+			((vector-set!) (vector-set! (1st args) (2nd args) (3rd args)))
 			((vector) (apply vector args))
 			((map) (map (make-map-proc (1st args)) (2nd args)))
 			((apply) (apply-proc (1st args) (get-apply-list (cdr args))))
@@ -412,6 +416,15 @@
 ;                   |
 ;-------------------+
 
-; Syntax expansion
+; HIGH PRIORITY
+; cond syntax
+; begin syntax
+; while syntax
+; case syntax
+; let, let* syntax expansion
+
+; MEDIUM PRIORITY
 ; Use make-c...r instead of mapping car, cadr, etc. directly
+
+; LOW PRIORITY
 ; Make datatype checks implementation independent (i.e. don't use (eq? (car type) 'lit-exp))
