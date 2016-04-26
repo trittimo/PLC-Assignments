@@ -394,9 +394,9 @@
 (define (eval-one-exp x) (top-level-eval (parse-exp x)))
 
 ;-------------------+
-;					|
-;	    TODO		|
-;					|
+;                   |
+;	      TODO        |
+;                   |
 ;-------------------+
 
 ; Syntax expansion
