@@ -23,7 +23,10 @@
 	(if-exp (comp expression?) (true expression?) (false expression?))
 	(lit-exp (num (lambda (x) (or (number? x) (boolean? x) (symbol? x) (string? x) (list? x) (vector? x)))))
 	(var-exp (id symbol?))
-	(lambda-exp (los (lambda (x) (or (list? x) (pair? x) (symbol? x)))) (varargs symbol?) (body list?))
+	(lambda-exp 
+		(los (lambda (x) (or (list? x) (pair? x) (symbol? x)))) 
+		(varargs (list-of symbol?))
+		(body list?))
 	(app-exp (rator expression?) (rand (lambda (x) (andmap expression? x)))))
 	
 ;; environment type definitions
@@ -64,6 +67,16 @@
 
 (define (list-is-2-long? ls) (and (list? ls) (= (length ls) 2)))
 
+(define (get-list ls)
+	(if (pair? ls)
+		(cons (car ls) (get-list (cdr ls)))
+		'()))
+
+(define (get-last ls)
+  (if (pair? ls)
+  	(get-last (cdr ls))
+	  ls))
+
 (define (parse-exp datum)
 	(cond
 		((symbol? datum) (var-exp datum))
@@ -88,9 +101,9 @@
 						((< (length datum) 3) (eopl:error 'parse-exp (format "incorrect number of arguments in lambda: ~s" datum)))
 						((and (not (symbol? (2nd datum))) (not (andmap symbol? (2nd datum))))
 							(eopl:error 'parse-exp (format "lambda arguments are not symbols: ~s" (2nd datum))))
-						; THIS IS JIM'S TARD THING TO DO
-						;((symbol? (2nd datum)) (lambda-exp '() (2nd datum) (map parse-exp (cddr datum))))
-						;(else (lambda-exp (2nd datum) '() (map parse-exp (cddr datum))))))
+						((symbol? (2nd datum)) (lambda-exp '() (list (2nd datum)) (map parse-exp (cddr datum))))
+						((list? (2nd datum)) (lambda-exp (2nd datum) '() (map parse-exp (cddr datum))))
+						(else (lambda-exp (get-list (2nd datum)) (get-last (2nd datum))) (map parse-exp (cddr datum)))))
 				((eqv? (1st datum) 'if)
 					(if (< (length datum) 3)
 						(eopl:error 'parse-exp "incorrect number of arguments in if")
@@ -183,11 +196,15 @@
 				(list 'if (unparse-exp comp) (unparse-exp true) (unparse-exp false))))
 		(var-exp (id) id)
 		(lit-exp (num) num)
-		(variable-lambda-exp (argname body) (append (list 'lambda argname) (map unparse-exp body)))
-		(lambda-exp (los body) (append (list 'lambda los) (map unparse-exp body)))
+		(lambda-exp (los vararg body) 
+			(cond 
+				((and (= (length los) 0) (not (null? vararg))) ; (lambda x (car x))
+					(append (list 'lambda (car vararg)) (map unparse-exp body)))
+				((not (null? vararg)) ; (lambda (a b . c) stuff...)
+					(append (list 'lambda (cons los (car vararg))) (map unparse-exp body)))
+				(else (append (list 'lambda los) (map unparse-exp body)))))
 		(app-exp (rator rand) 
 			(cons (unparse-exp rator) (map unparse-exp rand)))))
-
 
 ;-----------------------+
 ;                       |
