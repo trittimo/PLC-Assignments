@@ -194,43 +194,50 @@
 ;                       |
 ;-----------------------+
 
-(define (or-expansion datum)
+(define (expand-or datum)
 	(if (null? datum)
 		#f
-		(list 'if (car datum) (car datum) (or-expansion (cdr datum)))))
+		(list 'if (car datum) (car datum) (expand-or (cdr datum)))))
 
-(define (and-expansion datum)
+(define (expand-and datum)
 	(cond
 		((null? datum) #t)
 		((null? (cdr datum)) (car datum))
-		(else (list 'if (car datum) (and-expansion (cdr datum)) #f))))
+		(else (list 'if (car datum) (expand-and (cdr datum)) #f))))
 
-(define (cond-expansion datum)
+(define (expand-cond datum)
 	(cond
 		((null? datum) )
 		((eqv? (caar datum) 'else) (cdar datum))
-		(else (list (append (list 'if (caar datum) (cadar datum)) (cond-expansion (cdr datum)))))))
+		(else (list (append (list 'if (caar datum) (cadar datum)) (expand-cond (cdr datum)))))))
 
-(define (let*-expansion datum)
+(define (expand-let* datum)
 	(let ((args (1st datum)) (body (2nd datum)))
 		(if
 			((null? args) (cdr datum))
-			(list (append (list 'lambda (list (caar args))) (let*-expansion (list (cdr args) body))) (cadar args)))))
+			(list (append (list 'lambda (list (caar args))) (expand-let* (list (cdr args) body))) (cadar args)))))
 
-(define (begin-expansion datum)
+(define (expand-begin datum)
 	(list (append (list 'lambda '()) datum)))
 
-(define (case-expansion datum) #f)
+(define (expand-case datum)
+	(letrec ((expr (1st datum)) 
+				(loop (lambda (datum)
+					(cond
+						((null? datum))
+						((eqv? (caar datum) 'else) (cdar datum))
+						(else (list (append (list 'if (list 'member expr (cons 'list (caar datum))) (cadar datum)) (loop (cdr datum)))))))))
+		(loop (cdr datum))))
 
 (define (expand-exp datum)
 	(let ((rest (cdr datum)))
 		(case (1st datum)
-			((or) (or-expansion rest))
-			((and) (and-expansion rest))
-			((cond) (car (cond-expansion rest)))
-			((let*) (let*-expansion rest))
-			((begin) (begin-expansion rest))
-			((case) (case-expansion rest)))))
+			((or) (expand-or rest))
+			((and) (expand-and rest))
+			((cond) (car (expand-cond rest)))
+			((let*) (expand-let* rest))
+			((begin) (expand-begin rest))
+			((case) (car (expand-case rest))))))
 
 (define (has-expansion? datum)
 	(member (1st datum) '( or and cond let* begin case )))
@@ -340,7 +347,7 @@
 	>= <= > < eq? equal? length list->vector list? pair? 
 	vector->list number? cdr cadr car caar cadar symbol? 
 	vector? display set-car! set-cdr! map apply vector-ref
-	vector vector-set! ))
+	vector vector-set! member ))
 
 (define init-env (extend-env *prim-proc-names* (map prim-proc *prim-proc-names*) (empty-env)))
 
@@ -357,6 +364,7 @@
 (define apply-prim-proc
 	(lambda (prim-proc args)
 		(case prim-proc
+			((member) (member (1st args) (2nd args)))
 			((vector-set!) (vector-set! (1st args) (2nd args) (3rd args)))
 			((vector) (apply vector args))
 			((map) (map (make-map-proc (1st args)) (2nd args)))
