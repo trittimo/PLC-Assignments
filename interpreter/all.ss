@@ -32,7 +32,7 @@
 
 ;-------------------+
 ;                   |
-;    DATATYPES      |
+;     DATATYPES     |
 ;                   |
 ;-------------------+
 
@@ -63,12 +63,16 @@
 
 (define-datatype proc-val proc-val?
 	(prim-proc (name symbol?))
-	(closure (params (list-of scheme-value?)) (bodies (list-of expression?)) (env environment?)))
+	(closure
+		(params (list-of scheme-value?))
+		(varargs (list-of scheme-value?))
+		(bodies (list-of expression?))
+		(env environment?)))
 
 
 ;-------------------+
 ;                   |
-;    PARSER         |
+;      PARSER       |
 ;                   |
 ;-------------------+
 
@@ -243,13 +247,13 @@
 ;                       |
 ;   SYNTAX EXPANSION    |
 ;                       |
-;-----------------------
+;-----------------------+
 
 
 
 ;-------------------+
 ;                   |
-;   INTERPRETER    |
+;   INTERPRETER     |
 ;                   |
 ;-------------------+
 
@@ -291,7 +295,7 @@
 						(args (eval-rands rands env)))
 				(apply-proc proc-value args)))
 		(lambda-exp (params varargs bodies)
-			(closure params bodies env))
+			(closure params varargs bodies env))
 		(let-exp (assigned bodies)
 			(eval-bodies bodies (extend-env (map car assigned) (eval-rands (map cadr assigned) env) env)))
 		(else (eopl:error 'eval-exp "Bad abstract syntax: ~a" exp))))
@@ -302,7 +306,7 @@
 (define (apply-proc proc-value args)
 	(cases proc-val proc-value
 		(prim-proc (op) (apply-prim-proc op args))
-		(closure (params bodies env) (eval-bodies bodies (extend-env params args env)))
+		(closure (params varargs bodies env) (eval-bodies bodies (extend-env params args env)))
 		(else (error 'apply-proc "Attempt to apply bad procedure: ~s" proc-value))))
 
 (define (eval-bodies bodies env)
