@@ -352,7 +352,8 @@
 (define *prim-proc-names* '(+ - * / add1 sub1 cons = not zero? list procedure? null? 
 									>= <= > < eq? equal? length list->vector list? pair? 
 									vector->list number? cdr cadr car caar cadar symbol? 
-									vector? display set-car! set-cdr! map apply vector-ref or ))
+									vector? display set-car! set-cdr! map apply vector-ref or 
+									vector ))
 
 (define init-env         ; for now, our initial global environment only contains 
 	(extend-env            ; procedure names.  Recall that an environment associates
@@ -379,6 +380,7 @@
 (define apply-prim-proc
 	(lambda (prim-proc args)
 		(case prim-proc
+			((vector) (apply vector args))
 			((map) (map (mapa (1st args)) (2nd args)))
 			((apply) (apply-proc (1st args) (get-apply-list (cdr args))))
 			((vector-ref) (vector-ref (1st args) (2nd args)))
