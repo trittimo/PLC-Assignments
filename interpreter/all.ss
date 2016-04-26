@@ -1,12 +1,3 @@
-;-------------------+
-;					|
-;	    TODO		|
-;					|
-;-------------------+
-
-; Make datatype checks implementation independent (i.e. don't use (eq? (car type) 'lit-exp))
-
-
 (load "chez-init.ss") 
 
 ;-------------------+
@@ -396,3 +387,11 @@
 		(rep)))
 
 (define (eval-one-exp x) (top-level-eval (parse-exp x)))
+
+;-------------------+
+;					|
+;	    TODO		|
+;					|
+;-------------------+
+
+; Make datatype checks implementation independent (i.e. don't use (eq? (car type) 'lit-exp))
