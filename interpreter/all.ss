@@ -31,8 +31,7 @@
 	
 ;; environment type definitions
 
-(define scheme-value?
-	(lambda (x) #t))
+(define (scheme-value?) #t)
 
 (define-datatype environment environment?
 	(empty-env-record)
@@ -214,40 +213,37 @@
 
 ; Environment definitions for CSSE 304 Scheme interpreter.  Based on EoPL section 2.3
 
-(define empty-env
-	(lambda ()
-		(empty-env-record)))
+(define (empty-env)
+	(empty-env-record))
 
-(define extend-env
-	(lambda (syms vals env)
-		(extended-env-record syms vals env)))
+(define (extend-env syms vals env)
+	(extended-env-record syms vals env))
 
-(define list-find-position
-	(lambda (sym los)
-		(if (symbol? (car los))
-			(list-index (lambda (xsym) (eqv? sym xsym)) los)
-			(list-index (lambda (xsym) (eqv? sym xsym)) (map cadr los)))))
+(define (list-find-position sym los)
+	(if (symbol? (car los))
+		(list-index (lambda (xsym) (eqv? sym xsym)) los)
+		(list-index (lambda (xsym) (eqv? sym xsym)) (map cadr los))))
 
-(define list-index
-	(lambda (pred ls)
-		(cond
-		 ((null? ls) #f)
-		 ((pred (car ls)) 0)
-		 (else (let ((list-index-r (list-index pred (cdr ls))))
-			 (if (number? list-index-r)
-		 (+ 1 list-index-r)
-		 #f))))))
+(define (list-index pred ls)
+	(cond
+		((null? ls) #f)
+		((pred (car ls)) 0)
+		(else 
+			(let ((list-index-r (list-index pred (cdr ls))))
+				(if (number? list-index-r)
+					(+ 1 list-index-r)
+					#f)))))
 
-(define apply-env
-	(lambda (env sym succeed fail) ; succeed and fail are procedures applied if the var is or isn't found, respectively.
-		(cases environment env
-			(empty-env-record ()
-				(fail))
-			(extended-env-record (syms vals env)
-				(let ((pos (list-find-position sym syms)))
-								(if (number? pos)
-							(succeed (list-ref vals pos))
-							(apply-env env sym succeed fail)))))))
+; succeed and fail are procedures applied if the var is or isn't found, respectively.
+(define (apply-env env sym succeed fail)
+	(cases environment env
+		(empty-env-record ()
+			(fail))
+		(extended-env-record (syms vals env)
+			(let ((pos (list-find-position sym syms)))
+							(if (number? pos)
+						(succeed (list-ref vals pos))
+						(apply-env env sym succeed fail))))))
 
 
 
@@ -258,9 +254,6 @@
 ;   SYNTAX EXPANSION    |
 ;                       |
 ;-----------------------+
-
-
-
 ; To be added later
 
 
@@ -276,14 +269,11 @@
 ;   INTERPRETER    |
 ;                   |
 ;-------------------+
-; top-level-eval evaluates a form in the global environment
 
+; top-level-eval evaluates a form in the global environment
 (define top-level-eval
 	(lambda (form)
-		; later we may add things that are not expressions.
 		(eval-exp form init-env)))
-
-; eval-exp is the main component of the interpreter
 
 (define (or-eval args env)
 	(cond
@@ -325,20 +315,18 @@
 
 ; evaluate the list of operands, putting results into a list
 
-(define eval-rands
-	(lambda (rands env)
-		(map (lambda (x) (eval-exp x env)) rands)))
+(define (eval-rands rands env)
+	(map (lambda (x) (eval-exp x env)) rands))
 
 ;  Apply a procedure to its arguments.
 ;  At this point, we only have primitive procedures.  
 ;  User-defined procedures will be added later.
 
-(define apply-proc
-	(lambda (proc-value args)
-		(cases proc-val proc-value
-			(prim-proc (op) (apply-prim-proc op args))
-			(closure (params bodies env) (eval-bodies bodies (extend-env params args env)))
-			(else (error 'apply-proc "Attempt to apply bad procedure: ~s" proc-value)))))
+(define (apply-proc proc-value args)
+	(cases proc-val proc-value
+		(prim-proc (op) (apply-prim-proc op args))
+		(closure (params bodies env) (eval-bodies bodies (extend-env params args env)))
+		(else (error 'apply-proc "Attempt to apply bad procedure: ~s" proc-value))))
 
 (define (eval-bodies bodies env)
 	(let loop ((bodies bodies))
@@ -349,27 +337,19 @@
 				(loop (cdr bodies))))))
 
 ; TODO Extend this to use make c...r from previous assignment
-(define *prim-proc-names* '(+ - * / add1 sub1 cons = not zero? list procedure? null? 
-									>= <= > < eq? equal? length list->vector list? pair? 
-									vector->list number? cdr cadr car caar cadar symbol? 
-									vector? display set-car! set-cdr! map apply vector-ref or 
-									vector vector-set! ))
+(define *prim-proc-names* 
+ 	'(+ - * / add1 sub1 cons = not zero? list procedure? null? 
+	>= <= > < eq? equal? length list->vector list? pair? 
+	vector->list number? cdr cadr car caar cadar symbol? 
+	vector? display set-car! set-cdr! map apply vector-ref
+	vector vector-set! ))
 
-(define init-env         ; for now, our initial global environment only contains 
-	(extend-env            ; procedure names.  Recall that an environment associates
-		 *prim-proc-names*   ;  a value (not an expression) with an identifier.
-		 (map prim-proc      
-					*prim-proc-names*)
-		 (empty-env)))
+(define init-env (extend-env *prim-proc-names* (map prim-proc *prim-proc-names*) (empty-env)))
 
 (define global-env init-env)
 
-; Usually an interpreter must define each 
-; built-in procedure individually.  We are "cheating" a little bit.
-
-(define (mapa proc)
-	(lambda (x)
-                (apply-proc proc (list x))))
+(define (make-map-proc proc)
+	(lambda (x) (apply-proc proc (list x))))
 
 (define (get-apply-list args)
 	(if (null? (cdr args))
@@ -382,7 +362,7 @@
 		(case prim-proc
 			((vector-set!) (vector-set! (1st args) (2nd args) (3rd args)))
 			((vector) (apply vector args))
-			((map) (map (mapa (1st args)) (2nd args)))
+			((map) (map (make-map-proc (1st args)) (2nd args)))
 			((apply) (apply-proc (1st args) (get-apply-list (cdr args))))
 			((vector-ref) (vector-ref (1st args) (2nd args)))
 			((set-cdr!) (set-cdr! (1st args) (2nd args)))
@@ -429,14 +409,11 @@
 						"Bad primitive procedure name: ~s" 
 						prim-op)))))
 
-(define rep      ; "read-eval-print" loop.
-	(lambda ()
-		(display "--> ")
-		;; notice that we don't save changes to the environment...
-		(let ((answer (top-level-eval (parse-exp (read)))))
-			;; TODO: are there answers that should display differently?
-			(eopl:pretty-print answer) (newline)
-			(rep))))  ; tail-recursive, so stack doesn't grow.
+(define (rep)
+	(display "--> ")
+	(let ((answer (top-level-eval (parse-exp (read)))))
+		;; TODO: are there answers that should display differently?
+		(eopl:pretty-print answer) (newline)
+		(rep)))
 
-(define eval-one-exp
-	(lambda (x) (top-level-eval (parse-exp x))))
+(define (eval-one-exp x) (top-level-eval (parse-exp x)))
