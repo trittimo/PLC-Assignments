@@ -153,14 +153,6 @@
 
 (define (unparse-exp exp)
 	(cases expression exp
-		(and-exp (args)
-			(if (null? args)
-				'(and)
-				(cons 'and (unparse-exp args))))
-		(or-exp (args)
-			(if (null? args)
-				'(or)
-				(cons 'or (unparse-exp args))))
 		(set!-exp (id assignment)
 			(list 'set! id (unparse-exp assignment)))
 		(named-let-exp (id assigned bodies)
@@ -213,16 +205,21 @@
 		((null? (cdr datum)) (car datum))
 		(else (list 'if (car datum) (and-expansion (cdr datum)) #f))))
 
-; (cond (#t #f) (#f #t))
-; (if #t #f (if #f #t))
 (define (cond-expansion datum)
 	(cond
 		((null? datum) )
 		((eqv? (caar datum) 'else) (cdar datum))
 		(else (list (append (list 'if (caar datum) (cadar datum)) (cond-expansion (cdr datum)))))))
 
-(define (let*-expansion datum) #f)
-(define (begin-expansion datum) #f)
+(define (let*-expansion datum)
+	(let ((args (1st datum)) (body (2nd datum)))
+		(if
+			((null? args) (cdr datum))
+			(list (append (list 'lambda (list (caar args))) (let*-expansion (list (cdr args) body))) (cadar args)))))
+
+(define (begin-expansion datum)
+	(list (append (list 'lambda '()) datum)))
+
 (define (case-expansion datum) #f)
 
 (define (expand-exp datum)
@@ -251,7 +248,7 @@
 	(extended-env-record syms vals env))
 
 (define (list-find-position sym los)
-	(if (symbol? (car los))
+	(if (and (not (null? los)) (symbol? (car los)))
 		(list-index (lambda (xsym) (eqv? sym xsym)) los)
 		(list-index (lambda (xsym) (eqv? sym xsym)) (map cadr los))))
 
@@ -311,6 +308,7 @@
 						(prim-proc (op) (apply-proc proc-value args))
 						(closure (params varargs bodies env)
 							(cond
+								((and (null? varargs) (null? params)) (apply-proc proc-value args))
 								((null? varargs) (apply-proc proc-value args))
 								((null? params) (apply-proc proc-value (list args)))
 								(else (apply-proc proc-value (get-app-args (length params) args))))))))
