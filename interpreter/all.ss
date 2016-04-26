@@ -6,20 +6,25 @@
 ;					|
 ;-------------------+
 
+; General helpers to make thing a bit more sane
 (define 1st car)
 (define 2nd cadr)
 (define 3rd caddr)
 (define 4th cadddr)
 
+; Used in define-datatype where we don't actually care about the type
 (define (scheme-value? x) #t)
 
+; Used in parse-exp where we check to ensure that certain expressions are lists where length = 2
 (define (list-is-2-long? ls) (and (list? ls) (= (length ls) 2)))
 
+; Gets the 'list' part of a list-pair [i.e. (get-list '(a b c . d)) -> (a b c)]
 (define (get-list ls)
 	(if (pair? ls)
 		(cons (car ls) (get-list (cdr ls)))
 		'()))
 
+; Gets the 'pair' part of a list-pair [i.e. (get-last '(a b c . d)) -> d]
 (define (get-last ls)
   (if (pair? ls)
   	(get-last (cdr ls))
