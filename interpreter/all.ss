@@ -1,5 +1,11 @@
-;:  Single-file version of the interpreter.
-;; Easier to submit to server, probably harder to use in the development process
+;-------------------+
+;					|
+;	    TODO		|
+;					|
+;-------------------+
+
+; Make datatype checks implementation independent (i.e. don't use (eq? (car type) 'lit-exp))
+
 
 (load "chez-init.ss") 
 
@@ -8,8 +14,6 @@
 ;    DATATYPES      |
 ;                   |
 ;-------------------+
-
-;; Parsed expression datatypes
 
 (define-datatype expression expression?
 	(and-exp (args scheme-value?))
@@ -28,10 +32,8 @@
 		(varargs (list-of symbol?))
 		(body list?))
 	(app-exp (rator expression?) (rand (lambda (x) (andmap expression? x)))))
-	
-;; environment type definitions
 
-(define (scheme-value?) #t)
+(define (scheme-value? x) #t)
 
 (define-datatype environment environment?
 	(empty-env-record)
@@ -40,13 +42,10 @@
 	 (vals (list-of scheme-value?))
 	 (env environment?)))
 
-; datatype for procedures.  At first there is only one
-; kind of procedure, but more kinds will be added later.
 (define-datatype proc-val proc-val?
 	(prim-proc (name symbol?))
 	(closure (params (list-of scheme-value?)) (bodies (list-of expression?)) (env environment?)))
-	 
-	
+
 
 ;-------------------+
 ;                   |
@@ -54,11 +53,6 @@
 ;                   |
 ;-------------------+
 
-; This is a parser for simple Scheme expressions, such as those in EOPL, 3.1 thru 3.3.
-
-; You will want to replace this with your parser that includes more expression types, more options for these types, and error-checking.
-
-; Procedures to make the parser a little bit saner.
 (define 1st car)
 (define 2nd cadr)
 (define 3rd caddr)
@@ -245,23 +239,14 @@
 						(succeed (list-ref vals pos))
 						(apply-env env sym succeed fail))))))
 
-
-
-
-
 ;-----------------------+
 ;                       |
 ;   SYNTAX EXPANSION    |
 ;                       |
-;-----------------------+
-; To be added later
+;-----------------------
 
 
-
-
-
-
-
+; TODO
 
 
 ;-------------------+
@@ -313,14 +298,8 @@
 			(eval-bodies bodies (extend-env (map car assigned) (eval-rands (map cadr assigned) env) env)))
 		(else (eopl:error 'eval-exp "Bad abstract syntax: ~a" exp))))
 
-; evaluate the list of operands, putting results into a list
-
 (define (eval-rands rands env)
 	(map (lambda (x) (eval-exp x env)) rands))
-
-;  Apply a procedure to its arguments.
-;  At this point, we only have primitive procedures.  
-;  User-defined procedures will be added later.
 
 (define (apply-proc proc-value args)
 	(cases proc-val proc-value
@@ -412,7 +391,7 @@
 (define (rep)
 	(display "--> ")
 	(let ((answer (top-level-eval (parse-exp (read)))))
-		;; TODO: are there answers that should display differently?
+		; TODO: are there answers that should display differently?
 		(eopl:pretty-print answer) (newline)
 		(rep)))
 
