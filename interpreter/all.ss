@@ -37,8 +37,6 @@
 ;-------------------+
 
 (define-datatype expression expression?
-	(and-exp (args scheme-value?))
-	(or-exp (args scheme-value?))
 	(set!-exp (id symbol?) (assignment expression?))
 	(named-let-exp (id symbol?) (assigned list?) (bodies list?))
 	(letrec-exp (assigned list?) (bodies list?))
@@ -85,14 +83,7 @@
 		((vector? datum) (lit-exp datum))
 		((pair? datum)
 			(cond
-				((eqv? (1st datum) 'and)
-					(if (null? (cdr datum))
-						(and-exp '())
-						(and-exp (map parse-exp (cdr datum)))))
-				((eqv? (1st datum) 'or)
-					(if (null? (cdr datum))
-						(or-exp '())
-						(or-exp (map parse-exp (cdr datum)))))
+				((has-expansion? datum) (parse-exp (expand-exp datum)))
 				((eqv? (1st datum) 'quote)
 					(lit-exp (2nd datum)))
 				((eqv? (1st datum) 'lambda)
@@ -207,6 +198,41 @@
 
 ;-----------------------+
 ;                       |
+;   SYNTAX EXPANSION    |
+;                       |
+;-----------------------+
+
+(define (or-expansion datum)
+	(if (null? datum)
+		#f
+		(list 'if (car datum) (car datum) (or-expansion (cdr datum)))))
+
+(define (and-expansion datum)
+	(cond
+		((null? datum) #t)
+		((null? (cdr datum)) (car datum))
+		(else (list 'if (car datum) (and-expansion (cdr datum)) #f))))
+
+(define (cond-expansion datum) #f)
+(define (let*-expansion datum) #f)
+(define (begin-expansion datum) #f)
+(define (case-expansion datum) #f)
+
+(define (expand-exp datum)
+	(let ((rest (cdr datum)))
+		(case (1st datum)
+			((or) (or-expansion rest))
+			((and) (and-expansion rest))
+			((cond) (cond-expansion rest))
+			((let*) (let*-expansion rest))
+			((begin) (begin-expansion rest))
+			((case) (case-expansion rest)))))
+
+(define (has-expansion? datum)
+	(member (1st datum) '( or and cond let* begin case )))
+
+;-----------------------+
+;                       |
 ;      ENVIRONMENT      |
 ;                       |
 ;-----------------------+
@@ -243,14 +269,6 @@
 						(succeed (list-ref vals pos))
 						(apply-env env sym succeed fail))))))
 
-;-----------------------+
-;                       |
-;   SYNTAX EXPANSION    |
-;                       |
-;-----------------------+
-
-
-
 ;-------------------+
 ;                   |
 ;   INTERPRETER     |
@@ -262,20 +280,6 @@
 	(lambda (form)
 		(eval-exp form init-env)))
 
-(define (eval-or-exp args env)
-	(cond
-		((null? args) #f)
-		((and (eqv? (caar args) 'lit-exp) (eqv? (cadar args) '#f)) (eval-or-exp (cdr args) env))
-		(else (eval-exp (car args) env))))
-
-(define (eval-and-exp args env)
-	(cond
-		((null? args) #t)
-		((null? (cdr args)) (eval-exp (car args) env))
-		((and (eqv? (caar args) 'lit-exp) (eqv? (cadar args) '#t)) (eval-and-exp (cdr args) env))
-		((eval-exp (car args) env) (eval-and-exp (cdr args) env))
-		(else #f)))
-
 (define (get-app-args paramslen args)
 	(if (= paramslen 0)
 		(list args)
@@ -283,10 +287,6 @@
 
 (define (eval-exp exp env)
 	(cases expression exp
-		(and-exp (args)
-			(eval-and-exp args env))
-		(or-exp (args)
-			(eval-or-exp args env))
 		(if-exp (comp true false)
 			(cases expression false
 				(empty-exp () (if (eval-exp comp env) (eval-exp true env)))
@@ -404,7 +404,6 @@
 (define (rep)
 	(display "--> ")
 	(let ((answer (top-level-eval (parse-exp (read)))))
-		; TODO: are there answers that should display differently?
 		(eopl:pretty-print answer) (newline)
 		(rep)))
 
@@ -412,7 +411,7 @@
 
 ;-------------------+
 ;                   |
-;	      TODO        |
+;	    TODO        |
 ;                   |
 ;-------------------+
 
@@ -428,3 +427,4 @@
 
 ; LOW PRIORITY
 ; Make datatype checks implementation independent (i.e. don't use (eq? (car type) 'lit-exp))
+; (rep) may need to display some values differently
