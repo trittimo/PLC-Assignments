@@ -98,11 +98,11 @@
 				((eqv? (1st datum) 'lambda)
 					(cond
 						((< (length datum) 3) (eopl:error 'parse-exp (format "incorrect number of arguments in lambda: ~s" datum)))
-						((and (not (symbol? (2nd datum))) (not (andmap symbol? (2nd datum))))
+						((and (not (symbol? (2nd datum))) (not (or (pair? (2nd datum)) (andmap symbol? (2nd datum)))))
 							(eopl:error 'parse-exp (format "lambda arguments are not symbols: ~s" (2nd datum))))
 						((symbol? (2nd datum)) (lambda-exp '() (list (2nd datum)) (map parse-exp (cddr datum))))
 						((list? (2nd datum)) (lambda-exp (2nd datum) '() (map parse-exp (cddr datum))))
-						(else (lambda-exp (get-list (2nd datum)) (get-last (2nd datum))) (map parse-exp (cddr datum)))))
+						(else (lambda-exp (get-list (2nd datum)) (list (get-last (2nd datum))) (map parse-exp (cddr datum))))))
 				((eqv? (1st datum) 'if)
 					(if (< (length datum) 3)
 						(eopl:error 'parse-exp "incorrect number of arguments in if")
