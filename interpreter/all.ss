@@ -229,9 +229,6 @@
                   (else (list (append (list 'if (list 'member expr (cons 'list (caar datum))) (cadar datum)) (loop (cdr datum)))))))))
       (loop (cdr datum))))
 
-
- ;(while (< a 5) (set-car! a (- a 1)))
-; (let ((loop (lambda (func) (if (> a 1) (begin (set! a (- a 1)) (func func)))))) (loop loop))
 (define (expand-while datum)
    (list 'let (list (list 'loop (list 'lambda '(func) 
       (list 'if (1st datum) 
@@ -438,16 +435,9 @@
 
 ;-------------------+
 ;                   |
-;      TODO        |
+;      TODO         |
 ;                   |
 ;-------------------+
-
-; HIGH PRIORITY
-; cond syntax
-; begin syntax
-; while syntax
-; case syntax
-; let, let* syntax expansion
 
 ; MEDIUM PRIORITY
 ; Use make-c...r instead of mapping car, cadr, etc. directly
