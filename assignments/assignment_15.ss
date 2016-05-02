@@ -1,3 +1,9 @@
+; Why is the time savings (compared to fib) for the above definition of fib-memo less dramatic than the time
+;   savings for the definition of fib-memo in the Day 21 PowerPoint slides?
+; This is because we don't store a "max" n that fib has run, which means that we are required to check 
+;   the hashmap (which takes O(n) time) for a key, regardless of the input. By comparison, the fib-memo from 
+;   day 21 ppt stored the maximum run n value, so it took only O(1) to check if we needed to run fib(n)
+
 (define (apply-continuation k . v) (apply k v))
 
 ; Problem 1a
@@ -17,8 +23,6 @@
                 (if result
                     (apply-continuation k #f)
                     (apply-continuation set?-cps (cdr ls) k)))))))
-
-
 
 ; Helpers for 1c
 (define (1st-cps ls k)
