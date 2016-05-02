@@ -58,6 +58,7 @@
             (lambda (x)
                 (if x (apply-continuation andmap-cps pred (cdr ls) k) (apply-continuation k #f))))))
 
+; Problem 1f helper
 (define (or-cps a b k)
     (apply-continuation k (or a b)))
 
@@ -75,15 +76,65 @@
                             (apply-continuation helper (cdr ls) (lambda (y) (apply-continuation item-proc-cps c y k)))))))))))
         helper))
 
-;(define +-cps
-;    (lambda (a b k)
-;        (apply-continuation k (+ a b))))
-
-;(define sn-list-sum-cps
-;    (cps-snlist-recur 0 +-cps +-cps))
-
 (define (reverse-cps x y k)
     (apply-continuation k (append y (list x))))
 
 (define sn-list-reverse-cps
     (cps-snlist-recur '() reverse-cps reverse-cps))
+
+(define sn-list-depth-cps
+    (cps-snlist-recur 1
+        (lambda (x y k)
+            (apply-continuation k y))
+        (lambda (x y k)
+            (apply-continuation k (max (add1 x) y)))))
+
+(define (sn-list-occur-cps item ls proc)
+    ((cps-snlist-recur 0
+        (lambda (x y k)
+            (if (eqv? x item)
+                (apply-continuation k (add1 y))
+                (apply-continuation k y)))
+        (lambda (x y k)
+            (apply-continuation k (+ x y)))) ls proc))
+
+; Problem 2
+(define (memoize proc hash equiv?)
+    (let ((table (make-hashtable hash equiv?)))
+        (lambda args
+            (if (hashtable-contains? table args)
+                (hashtable-ref table args "Invalid Index!")
+                (let ((result (apply proc args)))
+                    (hashtable-set! table args result)
+                    result)))))
+
+
+; Problem 3 helper
+(define-syntax with-values
+    (syntax-rules ()
+        ((_ expr consumer)
+            (call-with-values
+                (lambda () expr)
+                consumer))))
+
+(define-syntax mv-let
+    (syntax-rules ()
+        ((_ ((x ...) e0) e1 e2 ...)
+            (with-values e0 (lambda (x ...) e1 e2 ...)))))
+
+; Problem 3
+(define (subst-leftmost-helper new old slist comp)
+    (cond
+        ((symbol? slist) (if (comp slist old) (values #t new) (values #f slist)))
+        ((null? slist) (values #f '()))
+        ((and (symbol? (car slist)) (comp (car slist) old)) (values #t (cons new (cdr slist))))
+        (else
+            (mv-let ((done newls) (subst-leftmost-helper new old (car slist) comp))
+                (if done
+                    (values #t (cons newls (cdr slist)))
+                    (mv-let ((done continue) (subst-leftmost-helper new old (cdr slist) comp))
+                        (values done (cons newls continue))))))))
+
+(define (subst-leftmost new old slist comp)
+    (mv-let ((replaced newls) (subst-leftmost-helper new old slist comp))
+        newls))
