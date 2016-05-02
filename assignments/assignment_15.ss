@@ -127,7 +127,6 @@
     (cond
         ((symbol? slist) (if (comp slist old) (values #t new) (values #f slist)))
         ((null? slist) (values #f '()))
-        ((and (symbol? (car slist)) (comp (car slist) old)) (values #t (cons new (cdr slist))))
         (else
             (mv-let ((done newls) (subst-leftmost-helper new old (car slist) comp))
                 (if done
