@@ -357,7 +357,7 @@
    >= <= > < eq? equal? length list->vector list? pair? 
    vector->list number? cdr cadr car caar cadar symbol? 
    vector? display set-car! set-cdr! map apply vector-ref
-   vector vector-set! member quotient ))
+   vector vector-set! member quotient values call-with-values ))
 
 (define init-env (extend-env *prim-proc-names* (map prim-proc *prim-proc-names*) (empty-env)))
 
@@ -374,6 +374,8 @@
 (define apply-prim-proc
    (lambda (prim-proc args)
       (case prim-proc
+         ((call-with-values) (apply-proc (2nd args) (apply-proc (1st args) '())))
+         ((values) args)
          ((member) (member (1st args) (2nd args)))
          ((vector-set!) (vector-set! (1st args) (2nd args) (3rd args)))
          ((vector) (apply vector args))
