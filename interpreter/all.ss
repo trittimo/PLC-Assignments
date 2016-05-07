@@ -56,7 +56,7 @@
    (extended-env-record
     (syms (list-of scheme-value?))
     (vals (list-of scheme-value?))
-    (env environment?)))
+    (env box?)))
 
 (define-datatype proc-val proc-val?
    (prim-proc (name symbol?))
@@ -64,7 +64,7 @@
       (params (list-of scheme-value?))
       (varargs (list-of scheme-value?))
       (bodies (list-of expression?))
-      (env environment?)))
+      (env box?)))
 
 
 ;-------------------+
@@ -163,14 +163,14 @@
             (list 'if (unparse-exp comp) (unparse-exp true) (unparse-exp false))))
       (var-exp (id) id)
       (lit-exp (num) num)
-      (lambda-exp (los vararg body) 
+      (lambda-exp (los vararg body)
          (cond 
             ((and (= (length los) 0) (not (null? vararg))) ; (lambda x (car x))
                (append (list 'lambda (car vararg)) (map unparse-exp body)))
             ((not (null? vararg)) ; (lambda (a b . c) stuff...)
                (append (list 'lambda (cons los (car vararg))) (map unparse-exp body)))
             (else (append (list 'lambda los) (map unparse-exp body)))))
-      (app-exp (rator rand) 
+      (app-exp (rator rand)
          (cons (unparse-exp rator) (map unparse-exp rand)))))
 
 ;-----------------------+
@@ -221,6 +221,9 @@
             (list (list 'func 'func))))))) 
       (list 'loop 'loop)))
 
+;(define (named-let datum)
+;   (list 
+
 (define (expand-exp datum)
    (let ((rest (cdr datum)))
       (case (1st datum)
@@ -242,10 +245,10 @@
 ;-----------------------+
 
 (define (empty-env)
-   (empty-env-record))
+   (box (empty-env-record)))
 
 (define (extend-env syms vals env)
-   (extended-env-record syms vals env))
+   (box (extended-env-record syms vals env)))
 
 (define (list-find-position sym los)
    (if (and (not (null? los)) (symbol? (car los)))
@@ -264,14 +267,14 @@
 
 ; succeed and fail are procedures applied if the var is or isn't found, respectively.
 (define (apply-env env sym succeed fail)
-   (cases environment env
+   (cases environment (unbox env)
       (empty-env-record ()
          (fail))
       (extended-env-record (syms vals env)
          (let ((pos (list-find-position sym syms)))
                      (if (number? pos)
-                  (succeed (list-ref vals pos))
-                  (apply-env env sym succeed fail))))))
+                        (succeed (list-ref vals pos))
+                        (apply-env env sym succeed fail))))))
 
 ;-------------------+
 ;                   |
@@ -315,7 +318,7 @@
       (lambda-exp (params varargs bodies)
          (closure params varargs bodies env))
       (let-exp (assigned bodies)
-         (eval-bodies bodies (extend-env (map car assigned) (eval-rands (map cadr assigned) env) env)))
+         (eval-bodies bodies (extend-env (map car assigned) (eval-rands (map cadr assigned) env)env)))
       (else (eopl:error 'eval-exp "Bad abstract syntax: ~a" exp))))
 
 (define (eval-rands rands env)
