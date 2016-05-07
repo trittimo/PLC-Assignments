@@ -30,6 +30,11 @@
    (get-last (cdr ls))
      ls))
 
+; Helper for named-let expansion - generates a list of temporary vars (i.e. (t0 t1 t2 t3)) of the given length
+(define (generate-temporaries len)
+   (map (lambda (x)
+      (string->symbol (string-append "t" (number->string x)))) (iota len)))
+
 ;-------------------+
 ;                   |
 ;     DATATYPES     |
@@ -227,6 +232,16 @@
               (map (lambda (x) (list 'set! (car x) (cadr x))) (cadr datum)))
               (cddr datum))))
 
+(define (expand-named-let datum)
+   (let ((temps (generate-temporaries (length (2nd datum)))) (args (map car (2nd datum))))
+      (list 'let (map list temps (map cadr (2nd datum)))
+         (list 'letrec
+            (cons (list (1st datum) (append (list 'lambda args) (cddr datum)))
+               (map list args temps))
+            (cons (1st datum) args)))))
+
+         
+
 (define (expand-exp datum)
    (let ((rest (cdr datum)))
       (case (1st datum)
@@ -237,10 +252,13 @@
          ((let*) (expand-let* rest))
          ((begin) (expand-begin rest))
          ((case) (car (expand-case rest)))
-         ((letrec) (expand-letrec datum)))))
+         ((letrec) (expand-letrec datum))
+         ((let) (expand-named-let rest))
+         )))
 
 (define (has-expansion? datum)
-   (member (1st datum) '( or and cond let* begin case while letrec )))
+   (or (member (1st datum) '( or and cond let* begin case while letrec ))
+      (and (eqv? (1st datum) 'let) (symbol? (2nd datum)))))
 
 ;-----------------------+
 ;                       |
@@ -299,7 +317,7 @@
 (define (set-ref! ls pos val)
    (if (= pos 0)
       (begin (set-car! ls val) ls)
-      (set-cdr! ls (set-ref! (cdr ls) (sub1 pos) val))))
+      (begin (set-cdr! ls (set-ref! (cdr ls) (sub1 pos) val)) ls)))
 
 (define (replace-val env id assignment)
    (cases environment (unbox env)
@@ -363,7 +381,7 @@
    >= <= > < eq? equal? length list->vector list? pair? 
    vector->list number? cdr cadr car caar cadar symbol? 
    vector? display set-car! set-cdr! map apply vector-ref
-   vector vector-set! member quotient ))
+   vector vector-set! member quotient append list-tail eqv? ))
 
 (define init-env (extend-env *prim-proc-names* (map prim-proc *prim-proc-names*) (empty-env)))
 
@@ -380,6 +398,9 @@
 (define apply-prim-proc
    (lambda (prim-proc args)
       (case prim-proc
+         ((eqv?) (eqv? (1st args) (2nd args)))
+         ((list-tail) (list-tail (1st args) (2nd args)))
+         ((append) (apply append args))
          ((member) (member (1st args) (2nd args)))
          ((vector-set!) (vector-set! (1st args) (2nd args) (3rd args)))
          ((vector) (apply vector args))
