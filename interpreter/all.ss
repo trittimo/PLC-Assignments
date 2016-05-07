@@ -292,8 +292,24 @@
       (list args)
       (cons (car args) (get-app-args (sub1 paramslen) (cdr args)))))
 
+(define (set-ref! ls pos val)
+   (if (= pos 0)
+      (begin (set-car! ls val) ls)
+      (set-cdr! ls (set-ref! (cdr ls) (sub1 pos) val))))
+
+(define (replace-val env id assignment)
+   (cases environment (unbox env)
+      (extended-env-record (syms vals env)
+         (let ((pos (list-find-position id syms)))
+            (if (number? pos)
+               (extended-env-record syms (set-ref! vals pos assignment) env)
+               (extended-env-record syms vals (box (replace-val env id assignment))))))
+      (else env)))
+
 (define (eval-exp exp env)
    (cases expression exp
+      (set!-exp (id assignment)
+         (set-box! env (replace-val env id (eval-exp assignment env))))
       (if-exp (comp true false)
          (cases expression false
             (empty-exp () (if (eval-exp comp env) (eval-exp true env)))
