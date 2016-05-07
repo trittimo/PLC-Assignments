@@ -221,8 +221,11 @@
             (list (list 'func 'func))))))) 
       (list 'loop 'loop)))
 
-;(define (named-let datum)
-;   (list 
+(define (expand-letrec datum)
+   (append (list 'let)
+      (append (append (list (map (lambda (x) (list (car x) #f)) (cadr datum)))
+              (map (lambda (x) (list 'set! (car x) (cadr x))) (cadr datum)))
+              (cddr datum))))
 
 (define (expand-exp datum)
    (let ((rest (cdr datum)))
@@ -233,10 +236,11 @@
          ((cond) (car (expand-cond rest)))
          ((let*) (expand-let* rest))
          ((begin) (expand-begin rest))
-         ((case) (car (expand-case rest))))))
+         ((case) (car (expand-case rest)))
+         ((letrec) (expand-letrec datum)))))
 
 (define (has-expansion? datum)
-   (member (1st datum) '( or and cond let* begin case while )))
+   (member (1st datum) '( or and cond let* begin case while letrec )))
 
 ;-----------------------+
 ;                       |
