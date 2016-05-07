@@ -87,9 +87,9 @@
                (lit-exp (2nd datum)))
             ((eqv? (1st datum) 'lambda)
                (cond
-                  ((< (length datum) 3) (eopl:error 'parse-exp (format "incorrect number of arguments in lambda: ~s" datum)))
+                  ((< (length datum) 3) (eopl:error 'parse-exp "incorrect number of arguments in lambda: ~s" datum))
                   ((and (not (symbol? (2nd datum))) (not (or (pair? (2nd datum)) (andmap symbol? (2nd datum)))))
-                     (eopl:error 'parse-exp (format "lambda arguments are not symbols: ~s" (2nd datum))))
+                     (eopl:error 'parse-exp "lambda arguments are not symbols: ~s" (2nd datum)))
                   ((symbol? (2nd datum)) (lambda-exp '() (list (2nd datum)) (map parse-exp (cddr datum))))
                   ((list? (2nd datum)) (lambda-exp (2nd datum) '() (map parse-exp (cddr datum))))
                   (else (lambda-exp (get-list (2nd datum)) (list (get-last (2nd datum))) (map parse-exp (cddr datum))))))
@@ -100,10 +100,10 @@
                      (if (> (length datum) 3) (parse-exp (4th datum)) (empty-exp)))))
             ((and (eqv? (1st datum) 'let) (symbol? (2nd datum)))
                (cond
-                  ((< (length datum) 4) (eopl:error 'parse-exp (format "incorrect number of arguments to named let: ~s" datum)))
-                  ((not (list? (3rd datum))) (eopl:error 'parse-exp (format "not a proper list: ~s" (3rd datum))))
-                  ((not (andmap list-is-2-long? (3rd datum))) (eopl:error 'parse-exp (format "not all proper lists: ~s" (3rd datum))))
-                  ((not (andmap symbol? (map 1st (3rd datum)))) (eopl:error 'parse-exp (format "first members must be symbols: ~s" (3rd datum))))
+                  ((< (length datum) 4) (eopl:error 'parse-exp "incorrect number of arguments to named let: ~s" datum))
+                  ((not (list? (3rd datum))) (eopl:error 'parse-exp "not a proper list: ~s" (3rd datum)))
+                  ((not (andmap list-is-2-long? (3rd datum))) (eopl:error 'parse-exp "not all proper lists: ~s" (3rd datum)))
+                  ((not (andmap symbol? (map 1st (3rd datum)))) (eopl:error 'parse-exp "first members must be symbols: ~s" (3rd datum)))
                   (else
                      (named-let-exp
                         (2nd datum)
@@ -111,31 +111,31 @@
                         (map parse-exp (cdddr datum))))))
             ((eqv? (1st datum) 'let)
                (cond
-                  ((< (length datum) 3) (eopl:error 'parse-exp (format "incorrect number of arguments to let: ~s" datum)))
-                  ((not (list? (2nd datum))) (eopl:error 'parse-exp (format "not a proper list: ~s" (2nd datum))))
-                  ((not (andmap list-is-2-long? (2nd datum))) (eopl:error 'parse-exp (format "not all proper lists: ~s" (2nd datum))))
-                  ((not (andmap symbol? (map 1st (2nd datum)))) (eopl:error 'parse-exp (format "first members must be symbols: ~s" (2nd datum))))
+                  ((< (length datum) 3) (eopl:error 'parse-exp "incorrect number of arguments to let: ~s" datum))
+                  ((not (list? (2nd datum))) (eopl:error 'parse-exp "not a proper list: ~s" (2nd datum)))
+                  ((not (andmap list-is-2-long? (2nd datum))) (eopl:error 'parse-exp "not all proper lists: ~s" (2nd datum)))
+                  ((not (andmap symbol? (map 1st (2nd datum)))) (eopl:error 'parse-exp "first members must be symbols: ~s" (2nd datum)))
                   (else
                      (let-exp 
                         (map (lambda (x) (list (parse-exp (1st x)) (parse-exp (2nd x)))) (2nd datum))
                         (map parse-exp (cddr datum))))))
             ((eqv? (1st datum) 'letrec)
                (cond
-                  ((< (length datum) 3) (eopl:error 'parse-exp (format "incorrect number of arguments to letrec: ~s" datum)))
-                  ((not (list? (2nd datum))) (eopl:error 'parse-exp (format "not a proper list: ~s" (2nd datum))))
-                  ((not (andmap list-is-2-long? (2nd datum))) (eopl:error 'parse-exp (format "not all proper lists: ~s" (2nd datum))))
-                  ((not (andmap symbol? (map 1st (2nd datum)))) (eopl:error 'parse-exp (format "first members must be symbols: ~s" (2nd datum))))
+                  ((< (length datum) 3) (eopl:error 'parse-exp "incorrect number of arguments to letrec: ~s" datum))
+                  ((not (list? (2nd datum))) (eopl:error 'parse-exp "not a proper list: ~s" (2nd datum)))
+                  ((not (andmap list-is-2-long? (2nd datum))) (eopl:error 'parse-exp "not all proper lists: ~s" (2nd datum)))
+                  ((not (andmap symbol? (map 1st (2nd datum)))) (eopl:error 'parse-exp "first members must be symbols: ~s" (2nd datum)))
                   (else
                      (letrec-exp 
                         (map (lambda (x) (list (parse-exp (1st x)) (parse-exp (2nd x)))) (2nd datum))
                         (map parse-exp (cddr datum))))))
             ((eqv? (1st datum) 'set!)
                (cond
-                  ((not (= (length datum) 3)) (eopl:error 'parse-exp (format "incorrect number of arguments to set!: ~s" datum)))
+                  ((not (= (length datum) 3)) (eopl:error 'parse-exp "incorrect number of arguments to set!: ~s" datum))
                   (else
                      (set!-exp (2nd datum) (parse-exp (3rd datum))))))
             ((not (list? datum))
-               (eopl:error 'parse-exp (format "Datum '~s' is not a proper list" datum)))
+               (eopl:error 'parse-exp "Datum '~s' is not a proper list" datum))
             (else (app-exp (parse-exp (1st datum))
                (map parse-exp (cdr datum))))))
       (else (eopl:error 'parse-exp "bad expression: ~s" datum))))
@@ -304,7 +304,7 @@
             (lambda (x) x)
             (lambda ()
                (apply-env global-env id (lambda (x) x) 
-                  (lambda () (error 'apply-env "variable ~s is not bound" id))))))
+                  (lambda () (error 'apply-env (format "variable ~s is not bound" id)))))))
       (app-exp (rator rands)
          (let ((proc-value (eval-exp rator env)) (args (eval-rands rands env)))
                (cases proc-val proc-value
@@ -328,7 +328,7 @@
    (cases proc-val proc-value
       (prim-proc (op) (apply-prim-proc op args))
       (closure (params varargs bodies env) (eval-bodies bodies (extend-env (append params varargs) args env)))
-      (else (error 'apply-proc "Attempt to apply bad procedure: ~s" proc-value))))
+      (else (error 'apply-proc (format "Attempt to apply bad procedure: ~s" proc-value)))))
 
 (define (eval-bodies bodies env)
    (let loop ((bodies bodies))
@@ -408,8 +408,8 @@
          ((length) (length (1st args)))
          ((list->vector) (list->vector (1st args)))
          (else (error 'apply-prim-proc 
-                  "Bad primitive procedure name: ~s" 
-                  prim-op)))))
+                  (format "Bad primitive procedure name: ~s" 
+                  prim-op))))))
 
 (define (rep)
    (display "--> ")
