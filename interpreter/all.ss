@@ -240,7 +240,8 @@
                (map list args temps))
             (cons (1st datum) args)))))
 
-         
+(define (expand-define datum)
+   (append (list 'set!) datum))
 
 (define (expand-exp datum)
    (let ((rest (cdr datum)))
@@ -254,10 +255,11 @@
          ((case) (car (expand-case rest)))
          ((letrec) (expand-letrec datum))
          ((let) (expand-named-let rest))
+         ((define) (expand-define rest))
          )))
 
 (define (has-expansion? datum)
-   (or (member (1st datum) '( or and cond let* begin case while letrec ))
+   (or (member (1st datum) '( or and cond let* begin case while letrec define ))
       (and (eqv? (1st datum) 'let) (symbol? (2nd datum)))))
 
 ;-----------------------+
@@ -319,27 +321,25 @@
       (begin (set-car! ls val) ls)
       (begin (set-cdr! ls (set-ref! (cdr ls) (sub1 pos) val)) ls)))
 
-(define (set-val env id assignment)
-   (cases environment (unbox env)
+(define (set-global-val id assignment)
+   (cases environment (unbox global-env)
       (extended-env-record (syms vals env)
-         (extended-env-record (cons id syms) (cons assignment vals) env))
-      (else eopl:error 'set-val "Invalid environment setting ~s = ~s" id assignment)))
+            (extended-env-record (cons id syms) (cons assignment vals) env))
+      (else (unbox global-env))))
 
 (define (replace-val env id assignment)
-   (if (eqv? env global-env)
-      (set-val env id assignment)
-      (cases environment (unbox env)
-         (extended-env-record (syms vals env)
-            (let ((pos (list-find-position id syms)))
-               (if (number? pos)
-                  (extended-env-record syms (set-ref! vals pos assignment) env)
-                  (extended-env-record syms vals (box (replace-val env id assignment))))))
-         (else env))))
+   (cases environment (unbox env)
+      (extended-env-record (syms vals env)
+         (let ((pos (list-find-position id syms)))
+            (if (number? pos)
+               (extended-env-record syms (set-ref! vals pos assignment) env)
+               (extended-env-record syms vals (box (replace-val env id assignment))))))
+      (else (set-global-val id assignment))))
 
 (define (eval-exp exp env)
    (cases expression exp
       (set!-exp (id assignment)
-            (set-box! env (replace-val env id (eval-exp assignment env))))
+         (set-box! env (replace-val env id (eval-exp assignment env))))
       (if-exp (comp true false)
          (cases expression false
             (empty-exp () (if (eval-exp comp env) (eval-exp true env)))
@@ -395,7 +395,8 @@
 
 (define global-env init-env)
 
-(define (reset-global-env) (set! global-env (extend-env *prim-proc-names* (map prim-proc *prim-proc-names*) (empty-env))))
+(define (reset-global-env)
+      (set! global-env (extend-env *prim-proc-names* (map prim-proc *prim-proc-names*) (empty-env))))
 
 (define (make-map-proc proc)
    (lambda (x) (apply-proc proc (list x))))
