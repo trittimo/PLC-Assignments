@@ -387,6 +387,8 @@
 
 (define global-env init-env)
 
+(define (reset-global-env) (set! global-env (extend-env *prim-proc-names* (map prim-proc *prim-proc-names*) (empty-env))))
+
 (define (make-map-proc proc)
    (lambda (x) (apply-proc proc (list x))))
 
