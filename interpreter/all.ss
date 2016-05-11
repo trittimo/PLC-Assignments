@@ -44,7 +44,6 @@
 (define-datatype expression expression?
    (set!-exp (id symbol?) (assignment expression?))
    (named-let-exp (id symbol?) (assigned list?) (bodies list?))
-   (letrec-exp (assigned list?) (bodies list?))
    (let-exp (assigned list?) (bodies list?))
    (empty-exp)
    (if-exp (comp expression?) (true expression?) (false expression?))
@@ -124,16 +123,6 @@
                      (let-exp 
                         (map (lambda (x) (list (parse-exp (1st x)) (parse-exp (2nd x)))) (2nd datum))
                         (map parse-exp (cddr datum))))))
-            ((eqv? (1st datum) 'letrec)
-               (cond
-                  ((< (length datum) 3) (eopl:error 'parse-exp "incorrect number of arguments to letrec: ~s" datum))
-                  ((not (list? (2nd datum))) (eopl:error 'parse-exp "not a proper list: ~s" (2nd datum)))
-                  ((not (andmap list-is-2-long? (2nd datum))) (eopl:error 'parse-exp "not all proper lists: ~s" (2nd datum)))
-                  ((not (andmap symbol? (map 1st (2nd datum)))) (eopl:error 'parse-exp "first members must be symbols: ~s" (2nd datum)))
-                  (else
-                     (letrec-exp 
-                        (map (lambda (x) (list (parse-exp (1st x)) (parse-exp (2nd x)))) (2nd datum))
-                        (map parse-exp (cddr datum))))))
             ((eqv? (1st datum) 'set!)
                (cond
                   ((not (= (length datum) 3)) (eopl:error 'parse-exp "incorrect number of arguments to set!: ~s" datum))
@@ -153,10 +142,6 @@
          (append (list 'let id)
             (cons (map (lambda (x) (list (unparse-exp (1st x)) (unparse-exp (2nd x)))) assigned)
                (map unparse-exp bodies))))
-      (letrec-exp (assigned bodies)
-         (cons 'letrec
-            (cons (map (lambda (x) (list (unparse-exp (1st x)) (unparse-exp (2nd x)))) assigned)
-            (map unparse-exp bodies))))
       (let-exp (assigned bodies)
          (cons 'let 
             (cons (map (lambda (x) (list (unparse-exp (1st x)) (unparse-exp (2nd x)))) assigned)
