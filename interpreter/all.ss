@@ -303,7 +303,9 @@
 
 (define (set-ref! ls pos val)
    (if (= pos 0)
-      (begin (set-car! ls val) ls)
+      (if (box? (car ls))
+         (begin (display (format "~s = ~s\n" (car ls) val)) (set-box! (car ls) (unbox val)) ls)
+         (begin (set-car! ls val) ls))
       (begin (set-cdr! ls (set-ref! (cdr ls) (sub1 pos) val)) ls)))
 
 (define (set-global-val id assignment)
@@ -312,6 +314,19 @@
             (extended-env-record (cons id syms) (cons assignment vals) env))
       (else (unbox global-env))))
 
+(define (list-find-ref-position id syms)
+   (cond
+      ((and (not (null? syms)) (list? (car syms)) (eqv? (cadar syms) id)) 0)
+      ((and (not (null? syms)) (eqv? (car syms) id)) 0)
+      ((null? syms) #f)
+      (else
+         (let ((result (list-find-ref-position id (cdr syms))))
+            (if result
+               (+ 1 result)
+               #f)))))
+
+; syms -> ((ref x) (ref y) z)
+; vals -> (3 4 5)
 (define (replace-val env id assignment)
    (cases environment (unbox env)
       (extended-env-record (syms vals env)
@@ -355,10 +370,18 @@
 (define (eval-rands rands env)
    (map (lambda (x) (eval-exp x env)) rands))
 
+(define (box-if-ref params args)
+   (cond
+      ((null? params) args)
+      ((and (list? (car params)) (eqv? (caar params) 'ref))
+         (cons (box (car args)) (box-if-ref (cdr params) (cdr args))))
+      (else (cons (car args) (box-if-ref (cdr params) (cdr args))))))
+
 (define (apply-proc proc-value args)
    (cases proc-val proc-value
       (prim-proc (op) (apply-prim-proc op args))
-      (closure (params varargs bodies env) (eval-bodies bodies (extend-env (append params varargs) args env)))
+      (closure (params varargs bodies env) (eval-bodies bodies (extend-env (append params varargs)
+         (box-if-ref params args) env)))
       (else (error 'apply-proc (format "Attempt to apply bad procedure: ~s" proc-value)))))
 
 (define (eval-bodies bodies env)
