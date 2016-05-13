@@ -172,7 +172,7 @@
 (define (expand-or datum)
    (if (null? datum)
       #f
-      (list 'if (car datum) (car datum) (expand-or (cdr datum)))))
+      (list 'let (list (list 'ans (car datum))) (list 'if 'ans 'ans (expand-or (cdr datum))))))
 
 (define (expand-and datum)
    (cond
@@ -187,10 +187,10 @@
       (else (list (append (list 'if (caar datum) (cadar datum)) (expand-cond (cdr datum)))))))
 
 (define (expand-let* datum)
-   (let ((args (1st datum)) (body (2nd datum)))
-      (if
-         ((null? args) (cdr datum))
-         (list (append (list 'lambda (list (caar args))) (expand-let* (list (cdr args) body))) (cadar args)))))
+   (cond
+      ((null? (1st datum)) (list (append (list 'lambda (list)) (cdr datum))))
+      ((null? (cdr (1st datum))) (list (append (list 'lambda (list (caaar datum))) (cdr datum)) (cadaar datum)))
+      (else (list (list 'lambda (list (caaar datum)) (expand-let* (cons (cdar datum) (cdr datum)))) (cadaar datum)))))
 
 (define (expand-begin datum)
    (list (append (list 'lambda '()) datum)))
@@ -374,7 +374,7 @@
    >= <= > < eq? equal? length list->vector list? pair? 
    vector->list number? cdr cadr car caar cadar symbol? 
    vector? display set-car! set-cdr! map apply vector-ref
-   vector vector-set! member quotient append list-tail eqv? ))
+   vector vector-set! member quotient append list-tail eqv? assq ))
 
 (define init-env (extend-env *prim-proc-names* (map prim-proc *prim-proc-names*) (empty-env)))
 
@@ -394,6 +394,7 @@
 (define apply-prim-proc
    (lambda (prim-proc args)
       (case prim-proc
+         ((assq) (assq (1st args) (2nd args)))
          ((eqv?) (eqv? (1st args) (2nd args)))
          ((list-tail) (list-tail (1st args) (2nd args)))
          ((append) (apply append args))
