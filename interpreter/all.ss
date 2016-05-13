@@ -155,9 +155,9 @@
       (lit-exp (num) num)
       (lambda-exp (los vararg body)
          (cond 
-            ((and (= (length los) 0) (not (null? vararg))) ; (lambda x (car x))
+            ((and (= (length los) 0) (not (null? vararg)))
                (append (list 'lambda (car vararg)) (map unparse-exp body)))
-            ((not (null? vararg)) ; (lambda (a b . c) stuff...)
+            ((not (null? vararg))
                (append (list 'lambda (cons los (car vararg))) (map unparse-exp body)))
             (else (append (list 'lambda los) (map unparse-exp body)))))
       (app-exp (rator rand)
