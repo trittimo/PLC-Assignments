@@ -32,3 +32,18 @@
 (define (generate-temporaries len)
    (map (lambda (x)
       (string->symbol (string-append "t" (number->string x)))) (iota len)))
+
+(define compose
+	(case-lambda
+		(() (lambda (x) x))
+		((first . rest)
+		(let ((composed-rest (apply compose rest)))
+		(lambda (x) (first (composed-rest x)))))))
+
+; Returns a lambda that will apply car/cdr to the list
+(define (make-c...r s)
+	(apply compose (map (lambda (x)
+    (cond
+      ((eq? #\a x) car)
+      ((eq? #\d x) cadr)
+      (else (eopl:error 'make-c...r "Unexpected character encountered in make-c...r")))) (string->list s))))
