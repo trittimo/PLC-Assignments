@@ -87,7 +87,7 @@
    >= <= > < eq? equal? length list->vector list? pair? 
    vector->list number? cdr cadr car caar cadar symbol? 
    vector? display set-car! set-cdr! map apply vector-ref
-   vector vector-set! member quotient append list-tail eqv? assq ))
+   vector vector-set! member quotient append list-tail eqv? assq newline ))
 
 (define init-env (extend-env *prim-proc-names* (map prim-proc *prim-proc-names*) (empty-env)))
 
@@ -107,6 +107,7 @@
 (define apply-prim-proc
    (lambda (prim-proc args)
       (case prim-proc
+         ((newline) (newline))
          ((assq) (assq (1st args) (2nd args)))
          ((eqv?) (eqv? (1st args) (2nd args)))
          ((list-tail) (list-tail (1st args) (2nd args)))
