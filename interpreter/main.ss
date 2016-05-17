@@ -12,6 +12,7 @@
 
 (define (test test-number)
 	(load (string-append "../tests/A" (number->string test-number) "-test-code.ss"))
-	(l))
+	(l)
+	(r))
 
 (load-all)
