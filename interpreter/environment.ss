@@ -22,6 +22,7 @@
       (else
          (list-index pred (cdr ls) (+ 1 accum) k))))
 
+
 ; succeed and fail are procedures applied if the var is or isn't found, respectively.
 (define (apply-env env sym succeed fail)
    (cases environment (unbox env)
