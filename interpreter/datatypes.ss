@@ -32,3 +32,8 @@
       (varargs (list-of scheme-value?))
       (bodies (list-of expression?))
       (env box?)))
+
+(define-datatype continuation continuation?
+  (test-k (then-exp expression?) (else-exp expression?) (env environment?) (k continuation?))
+  (rator-k (rands (list-of expression?)) (env environment?) (k continuation?))
+  (rands-k (proc-value scheme-value?) (k continuation?)))

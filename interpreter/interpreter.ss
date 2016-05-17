@@ -4,9 +4,20 @@
 ;                   |
 ;-------------------+
 
-; top-level-eval evaluates a form in the global environment
+(define (apply-k k val)
+   (cases continuation k
+      (test-k (then-exp else-exp env k)
+         (if val
+            (eval-exp then-exp env k)
+            (eval-exp else-exp env k)))
+      (rator-k (rands env k)
+         (eval-rands rands env (rands-k val k)))
+      (rands-k (proc-value k)
+         (apply-proc proc-value val k))
+      (else (eopl:error 'apply-k "apply-k not implemented for form '~s'" k))))
+
 (define (top-level-eval form)
-   (eval-exp form init-env))
+   (eval-exp form init-env (lambda (x) x)))
 
 (define (get-app-args paramslen args)
    (if (= paramslen 0)
@@ -33,7 +44,7 @@
                (extended-env-record syms vals (box (replace-val env id assignment))))))
       (else (set-global-val id assignment))))
 
-(define (eval-exp exp env)
+(define (eval-exp exp env k)
    (cases expression exp
       (set!-exp (id assignment)
          (set-box! env (replace-val env id (eval-exp assignment env))))
@@ -67,7 +78,7 @@
 (define (eval-rands rands env)
    (map (lambda (x) (eval-exp x env)) rands))
 
-(define (apply-proc proc-value args)
+(define (apply-proc proc-value args k)
    (cases proc-val proc-value
       (prim-proc (op) (apply-prim-proc op args))
       (closure (params varargs bodies env) (eval-bodies bodies (extend-env (append params varargs) args env)))
