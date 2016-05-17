@@ -4,20 +4,8 @@
 ;                   |
 ;-------------------+
 
-(define (apply-k k val)
-   (cases continuation k
-      (test-k (then-exp else-exp env k)
-         (if val
-            (eval-exp then-exp env k)
-            (eval-exp else-exp env k)))
-      (rator-k (rands env k)
-         (eval-rands rands env (rands-k val k)))
-      (rands-k (proc-value k)
-         (apply-proc proc-value val k))
-      (else (eopl:error 'apply-k "apply-k not implemented for form '~s'" k))))
-
 (define (top-level-eval form)
-   (eval-exp form init-env (lambda (x) x)))
+   (eval-exp form init-env (identity)))
 
 (define (get-app-args paramslen args)
    (if (= paramslen 0)
@@ -35,7 +23,7 @@
             (extended-env-record (cons id syms) (cons assignment vals) env))
       (else (unbox global-env))))
 
-(define (replace-val env id assignment)
+(define (replace-val env id assignment k)
    (cases environment (unbox env)
       (extended-env-record (syms vals env)
          (let ((pos (list-find-position id syms)))
@@ -44,15 +32,31 @@
                (extended-env-record syms vals (box (replace-val env id assignment))))))
       (else (set-global-val id assignment))))
 
+(define (apply-k k val)
+   (cases continuation k
+      (identity () val)
+      (test-k (then-exp else-exp env k)
+         (cases expression else-exp
+            (empty-exp ()
+               (if val
+                  (eval-exp then-exp env k)))
+            (else
+               (if val
+                  (eval-exp then-exp env k)
+                  (eval-exp else-exp env k)))))
+      (rator-k (rands env k)
+         (eval-rands rands env (rands-k val k)))
+      (rands-k (proc-value k)
+         (apply-proc proc-value val k))
+      (else (eopl:error 'apply-k "apply-k not implemented for form '~s'" k))))
+
 (define (eval-exp exp env k)
    (cases expression exp
       (set!-exp (id assignment)
          (set-box! env (replace-val env id (eval-exp assignment env))))
       (if-exp (comp true false)
-         (cases expression false
-            (empty-exp () (if (eval-exp comp env) (eval-exp true env)))
-            (else (if (eval-exp comp env) (eval-exp true env) (eval-exp false env)))))
-      (lit-exp (datum) datum)
+         (eval-exp comp env (test-k true false env k)))
+      (lit-exp (datum) (apply-k k datum))
       (var-exp (id)
          (apply-env env id
             (lambda (x) x)
@@ -72,13 +76,13 @@
       (lambda-exp (params varargs bodies)
          (closure params varargs bodies env))
       (let-exp (assigned bodies)
-         (eval-bodies bodies (extend-env (map car assigned) (eval-rands (map cadr assigned) env)env)))
+         (eval-bodies bodies (extend-env (map car assigned) (eval-rands (map cadr assigned) env) env)))
       (else (eopl:error 'eval-exp "Bad abstract syntax: ~a" exp))))
 
 (define (eval-rands rands env)
    (map (lambda (x) (eval-exp x env)) rands))
 
-(define (apply-proc proc-value args k)
+(define (apply-proc proc-value args)
    (cases proc-val proc-value
       (prim-proc (op) (apply-prim-proc op args))
       (closure (params varargs bodies env) (eval-bodies bodies (extend-env (append params varargs) args env)))

@@ -12,7 +12,7 @@
    (if-exp (comp expression?) (true expression?) (false expression?))
    (lit-exp (num (lambda (x) (or (number? x) (boolean? x) (symbol? x) (string? x) (list? x) (vector? x)))))
    (var-exp (id symbol?))
-   (lambda-exp 
+   (lambda-exp
       (los (lambda (x) (or (list? x) (pair? x) (symbol? x)))) 
       (varargs (list-of symbol?))
       (body list?))
@@ -34,6 +34,7 @@
       (env box?)))
 
 (define-datatype continuation continuation?
-  (test-k (then-exp expression?) (else-exp expression?) (env environment?) (k continuation?))
-  (rator-k (rands (list-of expression?)) (env environment?) (k continuation?))
+  (identity)
+  (test-k (then-exp expression?) (else-exp expression?) (env box?) (k continuation?))
+  (rator-k (rands (list-of expression?)) (env box?) (k continuation?))
   (rands-k (proc-value scheme-value?) (k continuation?)))
