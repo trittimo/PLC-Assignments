@@ -15,15 +15,12 @@
       (list-index (lambda (xsym) (eqv? sym xsym)) los)
       (list-index (lambda (xsym) (eqv? sym xsym)) (map cadr los))))
 
-(define (list-index pred ls)
+(define (list-index pred ls accum k)
    (cond
-      ((null? ls) #f)
-      ((pred (car ls)) 0)
-      (else 
-         (let ((list-index-r (list-index pred (cdr ls))))
-            (if (number? list-index-r)
-               (+ 1 list-index-r)
-               #f)))))
+      ((null? ls) (apply-k #f))
+      ((pred (car ls)) (apply-k accum))
+      (else
+         (list-index pred (cdr ls) (+ 1 accum) k))))
 
 ; succeed and fail are procedures applied if the var is or isn't found, respectively.
 (define (apply-env env sym succeed fail)
