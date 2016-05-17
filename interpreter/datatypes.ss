@@ -1,7 +1,7 @@
 ;-------------------+
-;                            |
-;       DATATYPES       |
-;                            |
+;                   |
+;       DATATYPES   |
+;                   |
 ;-------------------+
 
 (define-datatype expression expression?

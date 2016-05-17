@@ -14,6 +14,6 @@
 (define (apply-env env sym succeed fail k)
    (cases environment (unbox env)
       (empty-env-record ()
-         (apply-k k fail))
+         (fail k))
       (extended-env-record (syms vals env)
-         (list-find-position sym syms (extended-env-record-k env sym succeed fail k)))))
+         (list-find-position sym syms (extended-env-record-k env vals succeed fail k)))))

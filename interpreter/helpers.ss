@@ -33,6 +33,9 @@
    (map (lambda (x)
       (string->symbol (string-append "t" (number->string x)))) (iota len)))
 
+; Note: may need this for succeed clause in continuations.ss/extended-env-record-k
+; (define (list-ref-cps vals pos k)
+
 ; A helper for list-find-position
 (define (list-index pred ls accum k)
    (cond
@@ -44,8 +47,8 @@
 ; Finds the position of the given symbol in the given list
 (define (list-find-position sym los k)
    (if (and (not (null? los)) (symbol? (car los)))
-      (list-index (lambda (xsym) (eqv? sym xsym)) 0 los k)
-      (list-index (lambda (xsym) (eqv? sym xsym)) 0 (map cadr los) k)))
+      (list-index (lambda (xsym) (eqv? sym xsym)) los 0 k)
+      (list-index (lambda (xsym) (eqv? sym xsym)) (map cadr los) 0 k)))
 
 ; A helper for make-c...r
 (define compose

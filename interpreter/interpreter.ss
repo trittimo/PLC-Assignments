@@ -41,12 +41,15 @@
       (lit-exp (datum) (apply-k k datum))
       (var-exp (id)
          (apply-env env id
-            (lambda (x) x)
-            (lambda ()
-               (apply-env global-env id (lambda (x) x) 
-                  (lambda () (error 'apply-env (format "variable ~s is not bound" id)))))))
+            (lambda (x k) (apply-k k x))
+            (lambda (k)
+               (apply-env global-env id
+                          (lambda (x k) (apply-k k x))
+                          (lambda (k)
+                          (apply-k k
+                             (error 'apply-env (format "variable ~s is not bound" id)))) k)) k))
       (app-exp (rator rands)
-         (let ((proc-value (eval-exp rator env)) (args (eval-rands rands env)))
+         (let ((proc-value (eval-exp rator env k)) (args (eval-rands rands env)))
                (cases proc-val proc-value
                   (prim-proc (op) (apply-proc proc-value args))
                   (closure (params varargs bodies env)
