@@ -5,6 +5,7 @@
 	(load "datatypes.ss")
 	(load "parse.ss")
 	(load "syntax-expansion.ss")
+	(load "continuations.ss")
 	(load "environment.ss")
 	(load "interpreter.ss"))
 
