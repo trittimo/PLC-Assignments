@@ -32,24 +32,6 @@
                (extended-env-record syms vals (box (replace-val env id assignment))))))
       (else (set-global-val id assignment))))
 
-(define (apply-k k val)
-   (cases continuation k
-      (identity () val)
-      (test-k (then-exp else-exp env k)
-         (cases expression else-exp
-            (empty-exp ()
-               (if val
-                  (eval-exp then-exp env k)))
-            (else
-               (if val
-                  (eval-exp then-exp env k)
-                  (eval-exp else-exp env k)))))
-      (rator-k (rands env k)
-         (eval-rands rands env (rands-k val k)))
-      (rands-k (proc-value k)
-         (apply-proc proc-value val k))
-      (else (eopl:error 'apply-k "apply-k not implemented for form '~s'" k))))
-
 (define (eval-exp exp env k)
    (cases expression exp
       (set!-exp (id assignment)

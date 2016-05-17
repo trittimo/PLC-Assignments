@@ -1,7 +1,7 @@
 ;-------------------+
-;                   |
-;     DATATYPES     |
-;                   |
+;                            |
+;       DATATYPES       |
+;                            |
 ;-------------------+
 
 (define-datatype expression expression?
@@ -21,9 +21,9 @@
 (define-datatype environment environment?
    (empty-env-record)
    (extended-env-record
-    (syms (list-of scheme-value?))
-    (vals (list-of scheme-value?))
-    (env box?)))
+      (syms (list-of scheme-value?))
+      (vals (list-of scheme-value?))
+      (env box?)))
 
 (define-datatype proc-val proc-val?
    (prim-proc (name symbol?))
@@ -32,9 +32,3 @@
       (varargs (list-of scheme-value?))
       (bodies (list-of expression?))
       (env box?)))
-
-(define-datatype continuation continuation?
-  (identity)
-  (test-k (then-exp expression?) (else-exp expression?) (env box?) (k continuation?))
-  (rator-k (rands (list-of expression?)) (env box?) (k continuation?))
-  (rands-k (proc-value scheme-value?) (k continuation?)))

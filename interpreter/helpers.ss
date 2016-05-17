@@ -33,6 +33,21 @@
    (map (lambda (x)
       (string->symbol (string-append "t" (number->string x)))) (iota len)))
 
+; A helper for list-find-position
+(define (list-index pred ls accum k)
+   (cond
+      ((null? ls) (apply-k k #f))
+      ((pred (car ls)) (apply-k k accum))
+      (else
+         (list-index pred (cdr ls) (+ 1 accum) k))))
+
+; Finds the position of the given symbol in the given list
+(define (list-find-position sym los k)
+   (if (and (not (null? los)) (symbol? (car los)))
+      (list-index (lambda (xsym) (eqv? sym xsym)) 0 los k)
+      (list-index (lambda (xsym) (eqv? sym xsym)) 0 (map cadr los) k)))
+
+; A helper for make-c...r
 (define compose
 	(case-lambda
 		(() (lambda (x) x))
