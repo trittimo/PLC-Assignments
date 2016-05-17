@@ -5,9 +5,8 @@
 ;-------------------+
 
 ; top-level-eval evaluates a form in the global environment
-(define top-level-eval
-   (lambda (form)
-      (eval-exp form init-env)))
+(define (top-level-eval form)
+   (eval-exp form init-env))
 
 (define (get-app-args paramslen args)
    (if (= paramslen 0)
