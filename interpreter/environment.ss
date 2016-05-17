@@ -17,8 +17,8 @@
 
 (define (list-index pred ls accum k)
    (cond
-      ((null? ls) (apply-k #f))
-      ((pred (car ls)) (apply-k accum))
+      ((null? ls) (apply-k k #f))
+      ((pred (car ls)) (apply-k k accum))
       (else
          (list-index pred (cdr ls) (+ 1 accum) k))))
 
