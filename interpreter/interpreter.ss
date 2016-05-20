@@ -49,36 +49,31 @@
                           (apply-k k
                              (error 'apply-env (format "variable ~s is not bound" id)))) k)) k))
       (app-exp (rator rands)
-         (let ((proc-value (eval-exp rator env k)) (args (eval-rands rands env)))
-               (cases proc-val proc-value
-                  (prim-proc (op) (apply-proc proc-value args))
-                  (closure (params varargs bodies env)
-                     (cond
-                        ((and (null? varargs) (null? params)) (apply-proc proc-value args))
-                        ((null? varargs) (apply-proc proc-value args))
-                        ((null? params) (apply-proc proc-value (list args)))
-                        (else (apply-proc proc-value (get-app-args (length params) args))))))))
+         (eval-exp rator
+                   env
+                  (rator-k rands env k)))
+
       (lambda-exp (params varargs bodies)
-         (closure params varargs bodies env))
+         (apply-k k (closure params varargs bodies env)))
       (let-exp (assigned bodies)
          (eval-bodies bodies (extend-env (map car assigned) (eval-rands (map cadr assigned) env) env)))
       (else (eopl:error 'eval-exp "Bad abstract syntax: ~a" exp))))
 
-(define (eval-rands rands env)
-   (map (lambda (x) (eval-exp x env)) rands))
+(define (eval-rands rands env k)
+   (map (lambda (x) (eval-exp x env k)) rands))
 
-(define (apply-proc proc-value args)
-   (cases proc-val proc-value
+(define (apply-proc proc-value args k)
+   (apply-k k (cases proc-val proc-value
       (prim-proc (op) (apply-prim-proc op args))
-      (closure (params varargs bodies env) (eval-bodies bodies (extend-env (append params varargs) args env)))
-      (else (error 'apply-proc (format "Attempt to apply bad procedure: ~s" proc-value)))))
+      (closure (params varargs bodies env) (eval-bodies bodies (extend-env (append params varargs) (list args) env) k))
+      (else (error 'apply-proc (format "Attempt to apply bad procedure: ~s" proc-value))))))
 
-(define (eval-bodies bodies env)
+(define (eval-bodies bodies env k)
    (let loop ((bodies bodies))
       (if (null? (cdr bodies))
-         (eval-exp (car bodies) env)
+         (eval-exp (car bodies) env k)
          (begin
-            (eval-exp (car bodies) env)
+            (eval-exp (car bodies) env k)
             (loop (cdr bodies))))))
 
 (define *prim-proc-names* 
