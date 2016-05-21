@@ -5,7 +5,7 @@
 ;-------------------+
 
 (define (top-level-eval form)
-   (car (eval-exp form init-env (identity))))
+   (eval-exp form init-env (identity)))
 
 (define (get-app-args paramslen args)
    (if (= paramslen 0)
@@ -39,33 +39,23 @@
       (if-exp (comp true false)
          (eval-exp comp env (test-k true false env k)))
       (lit-exp (datum) (apply-k k datum))
-      (var-exp (id)
-         (apply-env env id
-            (lambda (x k) (apply-k k x))
-            (lambda (k)
-               (apply-env global-env id
-                          (lambda (x k) (apply-k k x))
-                          (lambda (k)
-                          (apply-k k
-                             (error 'apply-env (format "variable ~s is not bound" id)))) k)) k))
+      (var-exp (id) (apply-env env id k))
       (app-exp (rator rands)
-         (eval-exp rator
-                   env
-                  (rator-k rands env k)))
-
+         (eval-exp rator env (rator-k rands env k)))
       (lambda-exp (params varargs bodies)
          (apply-k k (closure params varargs bodies env)))
       (let-exp (assigned bodies)
-         (eval-bodies bodies (extend-env (map car assigned) (eval-rands (map cadr assigned) env) env)))
+         (apply-k k (eval-bodies bodies (extend-env (map car assigned) (eval-rands (map cadr assigned) env) env))))
       (else (eopl:error 'eval-exp "Bad abstract syntax: ~a" exp))))
 
 (define (eval-rands rands env k)
-   (map (lambda (x) (eval-exp x env k)) rands))
+   ; TODO
+   (apply-k k (map (lambda (x) (eval-exp x env (identity))) rands)))
 
 (define (apply-proc proc-value args k)
    (apply-k k (cases proc-val proc-value
-      (prim-proc (op) (apply-prim-proc op args))
-      (closure (params varargs bodies env) (eval-bodies bodies (extend-env (append params varargs) (list args) env) k))
+      (prim-proc (op) (apply-prim-proc op args k))
+      (closure (params varargs bodies env) (eval-bodies bodies (extend-env (append params varargs) args env) k))
       (else (error 'apply-proc (format "Attempt to apply bad procedure: ~s" proc-value))))))
 
 (define (eval-bodies bodies env k)
