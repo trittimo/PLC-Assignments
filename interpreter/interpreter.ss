@@ -35,7 +35,7 @@
 (define (eval-exp exp env k)
    (cases expression exp
       (set!-exp (id assignment)
-         (set-box! env (replace-val env id (eval-exp assignment env))))
+         (apply-k k (set-box! env (replace-val env id (eval-exp assignment env)))))
       (if-exp (comp true false)
          (eval-exp comp env (test-k true false env k)))
       (lit-exp (datum) (apply-k k datum))
@@ -81,7 +81,7 @@
       (set! global-env (extend-env *prim-proc-names* (map prim-proc *prim-proc-names*) (empty-env))))
 
 (define (make-map-proc proc)
-   (lambda (x) (apply-proc proc (list x))))
+   (lambda (x) (apply-proc proc (list x) (identity))))
 
 (define (get-apply-list args)
    (if (null? (cdr args))
@@ -100,7 +100,7 @@
          ((vector-set!) (apply-k k (vector-set! (1st args) (2nd args) (3rd args))))
          ((vector) (apply-k k (apply vector args)))
          ((map) (apply-k k (map (make-map-proc (1st args)) (2nd args))))
-         ((apply) (apply-k k (apply-proc (1st args) (get-apply-list (cdr args)))))
+         ((apply) (apply-k k (apply-proc (1st args) (get-apply-list (cdr args)) (identity))))
          ((vector-ref) (apply-k k (vector-ref (1st args) (2nd args))))
          ((set-cdr!) (apply-k k (set-cdr! (1st args) (2nd args))))
          ((set-car!) (apply-k k (set-car! (1st args) (2nd args))))
