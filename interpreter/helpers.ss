@@ -39,7 +39,7 @@
 ; A helper for list-find-position
 (define (list-index pred ls accum k)
    (cond
-      ((null? ls) (apply-k k #f))
+      ((null? ls) (apply-k k #f ))
       ((pred (car ls)) (apply-k k accum))
       (else
          (list-index pred (cdr ls) (+ 1 accum) k))))

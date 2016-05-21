@@ -24,8 +24,8 @@
       (rands-k (proc-value k)
          (apply-proc proc-value val k))
       (extended-env-record-k (env vals succeed fail k)
-      	(if (number? (car val))
-      		(succeed (list-ref vals (car val)) k)
+      	(if (number? val)
+      		(succeed (list-ref vals val) k)
       		(apply-env env sym succeed fail k)))
       (else (eopl:error 'apply-k "apply-k not implemented for form '~s'" k))))
 
