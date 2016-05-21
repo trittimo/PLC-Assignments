@@ -44,8 +44,6 @@
          (eval-exp rator env (rator-k rands env k)))
       (lambda-exp (params varargs bodies)
          (apply-k k (closure params varargs bodies env)))
-      (let-exp (assigned bodies)
-         (apply-k k (eval-bodies bodies (extend-env (map car assigned) (eval-rands (map cadr assigned) env) env))))
       (else (eopl:error 'eval-exp "Bad abstract syntax: ~a" exp))))
 
 (define (eval-rands rands env k)

@@ -6,8 +6,6 @@
 
 (define-datatype expression expression?
    (set!-exp (id symbol?) (assignment expression?))
-   (named-let-exp (id symbol?) (assigned list?) (bodies list?))
-   (let-exp (assigned list?) (bodies list?))
    (empty-exp)
    (if-exp (comp expression?) (true expression?) (false expression?))
    (lit-exp (num (lambda (x) (or (number? x) (boolean? x) (symbol? x) (string? x) (list? x) (vector? x)))))

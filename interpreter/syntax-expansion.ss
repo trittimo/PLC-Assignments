@@ -49,8 +49,8 @@
 (define (expand-letrec datum)
    (append (list 'let)
       (append (append (list (map (lambda (x) (list (car x) #f)) (cadr datum)))
-              (map (lambda (x) (list 'set! (car x) (cadr x))) (cadr datum)))
-              (cddr datum))))
+         (map (lambda (x) (list 'set! (car x) (cadr x))) (cadr datum)))
+         (cddr datum))))
 
 (define (expand-named-let datum)
    (let ((temps (generate-temporaries (length (2nd datum)))) (args (map car (2nd datum))))
@@ -59,6 +59,11 @@
             (cons (list (1st datum) (append (list 'lambda args) (cddr datum)))
                (map list args temps))
             (cons (1st datum) args)))))
+
+; (let ((a 3) (b 4)) (+ a b) (- a b)
+; ((lambda (a b) (+ a b) (- a b)) 3 4)
+(define (expand-let datum)
+   (cons (append (list 'lambda (map car (1st datum))) (cdr datum)) (map 2nd (1st datum))))
 
 (define (expand-define datum)
    (append (list 'set!) datum))
@@ -74,10 +79,12 @@
          ((begin) (expand-begin rest))
          ((case) (car (expand-case rest)))
          ((letrec) (expand-letrec datum))
-         ((let) (expand-named-let rest))
+         ((let)
+            (if (symbol? (1st rest))
+               (expand-named-let rest)
+               (expand-let rest)))
          ((define) (expand-define rest))
          )))
 
 (define (has-expansion? datum)
-   (or (member (1st datum) '( or and cond let* begin case while letrec define ))
-      (and (eqv? (1st datum) 'let) (symbol? (2nd datum)))))
+   (member (1st datum) '( or and cond let* begin case while letrec define let )))
