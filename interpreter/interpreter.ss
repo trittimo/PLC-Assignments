@@ -23,10 +23,10 @@
             (extended-env-record (cons id syms) (cons assignment vals) env))
       (else (unbox global-env))))
 
-(define (replace-val env id assignment k)
+(define (replace-val env id assignment) ; todo should take k
    (cases environment (unbox env)
       (extended-env-record (syms vals env)
-         (let ((pos (list-find-position id syms)))
+         (let ((pos (list-find-position id syms (identity)))); todo (identity)
             (if (number? pos)
                (extended-env-record syms (set-ref! vals pos assignment) env)
                (extended-env-record syms vals (box (replace-val env id assignment))))))
@@ -35,7 +35,7 @@
 (define (eval-exp exp env k)
    (cases expression exp
       (set!-exp (id assignment)
-         (apply-k k (set-box! env (replace-val env id (eval-exp assignment env)))))
+         (apply-k k (set-box! env (replace-val env id (eval-exp assignment env (identity))))))
       (if-exp (comp true false)
          (eval-exp comp env (test-k true false env k)))
       (lit-exp (datum) (apply-k k datum))
