@@ -54,10 +54,10 @@
 
 
 (define (apply-proc proc-value args k)
-   (apply-k k (cases proc-val proc-value
+   (cases proc-val proc-value
       (prim-proc (op) (apply-prim-proc op args k))
       (closure (params varargs bodies env) (eval-bodies bodies (extend-env (append params varargs) args env) k))
-      (else (error 'apply-proc (format "Attempt to apply bad procedure: ~s" proc-value))))))
+      (else (error 'apply-proc (format "Attempt to apply bad procedure: ~s" proc-value)))))
 
 (define (eval-bodies bodies env k)
    (let loop ((bodies bodies))
