@@ -35,7 +35,7 @@
 (define (eval-exp exp env k)
    (cases expression exp
       (set!-exp (id assignment)
-         (apply-k k (set-box! env (replace-val env id (eval-exp assignment env (identity))))))
+          (set-box! env (replace-val env id (eval-exp assignment env (identity)))))
       (if-exp (comp true false)
          (eval-exp comp env (test-k true false env k)))
       (lit-exp (datum) (apply-k k datum))
@@ -48,7 +48,10 @@
 
 (define (eval-rands rands env k)
    ; TODO
-   (apply-k k (map (lambda (x) (eval-exp x env (identity))) rands)))
+   (if (null? rands)
+      (apply-k k '())
+      (eval-exp (car rands) env (eval-rands-k (cdr rands) env k))))
+
 
 (define (apply-proc proc-value args k)
    (apply-k k (cases proc-val proc-value
