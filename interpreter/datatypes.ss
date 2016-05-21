@@ -25,6 +25,7 @@
 
 (define-datatype proc-val proc-val?
    (prim-proc (name symbol?))
+   (c-proc (k continuation?))
    (closure
       (params (list-of scheme-value?))
       (varargs (list-of scheme-value?))
