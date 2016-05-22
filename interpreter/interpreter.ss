@@ -51,6 +51,8 @@
                   (lambda () (error 'apply-env (format "variable ~s is not bound" id)))))))
       (app-exp (rator rands)
          (let ((proc-value (eval-exp rator env)) (args (eval-rands rands env)))
+            (if (not (proc-val? proc-value))
+               (apply proc-value args)
                (cases proc-val proc-value
                   (prim-proc (op) (apply-proc proc-value args))
                   (closure (params varargs bodies env)
@@ -58,7 +60,7 @@
                         ((and (null? varargs) (null? params)) (apply-proc proc-value args))
                         ((null? varargs) (apply-proc proc-value args))
                         ((null? params) (apply-proc proc-value (list args)))
-                        (else (apply-proc proc-value (get-app-args (length params) args))))))))
+                        (else (apply-proc proc-value (get-app-args (length params) args)))))))))
       (lambda-exp (params varargs bodies)
          (closure params varargs bodies env))
       (let-exp (assigned bodies)
@@ -87,7 +89,7 @@
    >= <= > < eq? equal? length list->vector list? pair? 
    vector->list number? cdr cadr car caar cadar symbol? 
    vector? display set-car! set-cdr! map apply vector-ref
-   vector vector-set! member quotient append list-tail eqv? assq newline ))
+   vector vector-set! member quotient append list-tail eqv? assq newline call/cc ))
 
 (define init-env (extend-env *prim-proc-names* (map prim-proc *prim-proc-names*) (empty-env)))
 
@@ -107,6 +109,7 @@
 (define apply-prim-proc
    (lambda (prim-proc args)
       (case prim-proc
+         ((call/cc) (call/cc (lambda (x) (apply-proc (1st args) (list x)))))
          ((newline) (newline))
          ((assq) (assq (1st args) (2nd args)))
          ((eqv?) (eqv? (1st args) (2nd args)))
