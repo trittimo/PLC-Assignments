@@ -56,7 +56,8 @@
 (define (apply-proc proc-value args k)
    (cases proc-val proc-value
       (c-proc (k)
-         (apply-k k (car args)))
+         (begin (display (car k)) (display "\n")
+         (apply-k k (car args))))
       (prim-proc (op) (apply-prim-proc op args k))
       (closure (params varargs bodies env) (eval-bodies bodies (extend-env (append params varargs) args env) k))
       (else (error 'apply-proc (format "Attempt to apply bad procedure: ~s" proc-value)))))
@@ -74,7 +75,7 @@
    >= <= > < eq? equal? length list->vector list? pair? 
    vector->list number? cdr cadr car caar cadar symbol? 
    vector? display set-car! set-cdr! map apply vector-ref
-   vector vector-set! member quotient append list-tail eqv? assq newline call/cc ))
+   vector vector-set! member quotient append list-tail eqv? assq newline call/cc exit-list ))
 
 (define init-env (extend-env *prim-proc-names* (map prim-proc *prim-proc-names*) (empty-env)))
 
@@ -94,6 +95,7 @@
 (define apply-prim-proc
    (lambda (prim-proc args k)
       (case prim-proc
+         ((exit-list) (apply-k (identity) (apply list args)))
          ((call/cc) (apply-proc (1st args) (list (c-proc k)) k))
          ((newline) (apply-k k (newline)))
          ((assq) (apply-k k (assq (1st args) (2nd args))))
@@ -133,10 +135,7 @@
          ;((list) (map (lambda (x) (eval-exp x global-env)) args))
          ((list) (apply-k k args))
          ((procedure?)
-            (apply-k k (cond
-               ((not (list? (1st args))) #f)
-               ((eq? (caar args) 'prim-proc) (exists (lambda (x) (eq? x (cadar args))) *prim-proc-names*))
-               (else (eq? (caar args) 'closure)))))
+            (apply-k k (proc-val? (1st args))))
          ((display) (apply-k k (display (1st args))))
          ((null?) (apply-k k (null? (1st args))))
          ((>=) (apply-k k (>= (1st args) (2nd args))))

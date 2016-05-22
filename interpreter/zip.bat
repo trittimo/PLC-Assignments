@@ -1,1 +1,1 @@
-7z a -tzip .\interpreter.zip *.ss
+winrar a -afzip .\interpreter.zip *.ss
