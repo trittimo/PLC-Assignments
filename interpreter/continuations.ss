@@ -1,11 +1,12 @@
 (define-datatype continuation continuation?
-      (identity)
-      (cons-k (value scheme-value?) (k continuation?))
-      (eval-rands-k (rands (list-of scheme-value?)) (env box?) (k continuation?))
-      (test-k (then-exp expression?) (else-exp expression?) (env box?) (k continuation?))
-      (rator-k (rands (list-of expression?)) (env box?) (k continuation?))
-      (rands-k (proc-value scheme-value?) (k continuation?))
-      (extended-env-record-k (env box?) (vals list?) (sym symbol?) (k continuation?)))
+   (identity)
+   (cons-k (value scheme-value?) (k continuation?))
+   (eval-rands-k (rands (list-of scheme-value?)) (env box?) (k continuation?))
+   (test-k (then-exp expression?) (else-exp expression?) (env box?) (k continuation?))
+   (rator-k (rands (list-of expression?)) (env box?) (k continuation?))
+   (rands-k (proc-value scheme-value?) (k continuation?))
+   (extended-env-record-k (env box?) (vals list?) (sym symbol?) (k continuation?))
+   )
 
 (define (apply-k k val)
    (cases continuation k
@@ -34,8 +35,6 @@
       (else (eopl:error 'apply-k "apply-k not implemented for form '~s'" k))))
 
 (define (map-cps proc ls k)
-      (if (null? ls)
-            (apply-k k ls)
-            (apply-k k proc (car ls)
-                  (lambda (x) (map-cps proc (cdr ls)
-                        (lambda (y) (apply-k k (cons x y))))))))
+   (if (null? ls)
+      (apply-k k ls)
+      (map-cps proc (cdr ls) (cons-k (proc (car ls)) k))))
