@@ -14,6 +14,6 @@
 (define (apply-env env sym k)
    (cases environment (unbox env)
       (empty-env-record ()
-         (apply-k k (eopl:error 'apply-env "variable ~s is not bound" sym)))
+         (eopl:error 'apply-env "variable ~s is not bound" sym))
       (extended-env-record (syms vals env)
-         (list-find-position sym syms (extended-env-record-k env vals sym k)))))
+					(list-find-position sym syms (extended-env-record-k env vals sym k)))))

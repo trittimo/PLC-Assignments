@@ -56,8 +56,7 @@
 (define (apply-proc proc-value args k)
    (cases proc-val proc-value
       (c-proc (k)
-         (begin (display (car k)) (display "\n")
-         (apply-k k (car args))))
+         (apply-k k (car args)))
       (prim-proc (op) (apply-prim-proc op args k))
       (closure (params varargs bodies env) (eval-bodies bodies (extend-env (append params varargs) args env) k))
       (else (error 'apply-proc (format "Attempt to apply bad procedure: ~s" proc-value)))))
