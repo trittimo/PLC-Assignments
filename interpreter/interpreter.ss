@@ -47,7 +47,6 @@
       (else (eopl:error 'eval-exp "Bad abstract syntax: ~a" exp))))
 
 (define (eval-rands rands env k)
-   ; TODO
    (if (null? rands)
       (apply-k k '())
       (eval-exp (car rands) env (eval-rands-k (cdr rands) env k))))
@@ -86,9 +85,6 @@
 
 (define (reset-global-env)
       (set! global-env (extend-env *prim-proc-names* (map prim-proc *prim-proc-names*) (empty-env))))
-
-(define (make-map-proc proc k)
-   (lambda (x) (apply-proc proc (list x) (identity))))
 
 (define (get-apply-list args)
    (if (null? (cdr args))
