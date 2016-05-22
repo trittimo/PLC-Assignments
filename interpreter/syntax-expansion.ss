@@ -60,8 +60,6 @@
                (map list args temps))
             (cons (1st datum) args)))))
 
-; (let ((a 3) (b 4)) (+ a b) (- a b)
-; ((lambda (a b) (+ a b) (- a b)) 3 4)
 (define (expand-let datum)
    (cons (append (list 'lambda (map car (1st datum))) (cdr datum)) (map 2nd (1st datum))))
 

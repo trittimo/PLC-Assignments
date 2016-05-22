@@ -6,6 +6,7 @@
    (rator-k (rands (list-of expression?)) (env box?) (k continuation?))
    (rands-k (proc-value scheme-value?) (k continuation?))
    (extended-env-record-k (env box?) (vals list?) (sym symbol?) (k continuation?))
+   (map-cps-k (proc proc-val?) (ls list?) (k continuation?))
    )
 
 (define (apply-k k val)
@@ -32,9 +33,6 @@
          (if (number? val)
             (apply-k k (list-ref vals val))
             (apply-env env sym k)))
+      (map-cps-k (proc ls k)
+         (do-map-cps proc ls (cons-k val k)))
       (else (eopl:error 'apply-k "apply-k not implemented for form '~s'" k))))
-
-(define (map-cps proc ls k)
-   (if (null? ls)
-      (apply-k k ls)
-      (map-cps proc (cdr ls) (cons-k (proc (car ls)) k))))

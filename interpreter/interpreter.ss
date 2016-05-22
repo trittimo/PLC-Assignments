@@ -35,7 +35,7 @@
 (define (eval-exp exp env k)
    (cases expression exp
       (set!-exp (id assignment)
-          (set-box! env (replace-val env id (eval-exp assignment env (identity)))))
+         (set-box! env (replace-val env id (eval-exp assignment env (identity)))))
       (if-exp (comp true false)
          (eval-exp comp env (test-k true false env k)))
       (lit-exp (datum) (apply-k k datum))
@@ -52,13 +52,17 @@
       (apply-k k '())
       (eval-exp (car rands) env (eval-rands-k (cdr rands) env k))))
 
+(define (make-args varargs args)
+   (if (null? varargs)
+      args
+      (append (reverse (list-tail (reverse args) (- (length args) (length varargs)))) (list (list-tail args (length varargs))))))
 
 (define (apply-proc proc-value args k)
    (cases proc-val proc-value
       (c-proc (k)
          (apply-k k (car args)))
       (prim-proc (op) (apply-prim-proc op args k))
-      (closure (params varargs bodies env) (eval-bodies bodies (extend-env (append params varargs) args env) k))
+      (closure (params varargs bodies env) (eval-bodies bodies (extend-env (append params varargs) (make-args varargs args) env) k))
       (else (error 'apply-proc (format "Attempt to apply bad procedure: ~s" proc-value)))))
 
 (define (eval-bodies bodies env k)
@@ -83,13 +87,18 @@
 (define (reset-global-env)
       (set! global-env (extend-env *prim-proc-names* (map prim-proc *prim-proc-names*) (empty-env))))
 
-(define (make-map-proc proc)
+(define (make-map-proc proc k)
    (lambda (x) (apply-proc proc (list x) (identity))))
 
 (define (get-apply-list args)
    (if (null? (cdr args))
       (car args)
       (cons (car args) (get-apply-list (cdr args)))))
+
+(define (do-map-cps proc ls k)
+   (if (null? ls)
+      (apply-k k ls)
+      (apply-proc proc (list (car ls)) (map-cps-k proc (cdr ls) k))))
 
 (define apply-prim-proc
    (lambda (prim-proc args k)
@@ -104,7 +113,7 @@
          ((member) (apply-k k (member (1st args) (2nd args))))
          ((vector-set!) (apply-k k (vector-set! (1st args) (2nd args) (3rd args))))
          ((vector) (apply-k k (apply vector args)))
-         ((map) (apply-k k (map (make-map-proc (1st args)) (2nd args))))
+         ((map) (do-map-cps (1st args) (2nd args) k))
          ((apply) (apply-k k (apply-proc (1st args) (get-apply-list (cdr args)) (identity))))
          ((vector-ref) (apply-k k (vector-ref (1st args) (2nd args))))
          ((set-cdr!) (apply-k k (set-cdr! (1st args) (2nd args))))
