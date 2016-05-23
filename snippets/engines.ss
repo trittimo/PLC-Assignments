@@ -11,7 +11,7 @@
 				(loop (eng 20
 					(lambda (t v)
 						(display "ticks taken: ")
-						(display (+ t tick-count))
+						(display (+ (- 20 t) tick-count))
 						(display "\n")
 						v)
 					(lambda (x) (set! tick-count (+ tick-count 20)) x)))
