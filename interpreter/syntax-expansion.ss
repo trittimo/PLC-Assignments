@@ -66,9 +66,16 @@
 (define (expand-define datum)
    (append (list 'set!) datum))
 
+(define (expand-do1 datum)
+   (list 'let (list (list 'loop (list 'lambda '(func)
+      (append (cons 'begin (1st datum))
+         (list (list 'if (3rd datum) (list 'func 'func)))))))
+      (list 'loop 'loop)))
+
 (define (expand-exp datum)
    (let ((rest (cdr datum)))
       (case (1st datum)
+         ((do1) (expand-do1 rest))
          ((while) (expand-while rest))
          ((or) (expand-or rest))
          ((and) (expand-and rest))
@@ -85,4 +92,4 @@
          )))
 
 (define (has-expansion? datum)
-   (member (1st datum) '( or and cond let* begin case while letrec define let )))
+   (member (1st datum) '( or and cond let* begin case while letrec define let do1)))

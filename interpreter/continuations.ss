@@ -1,4 +1,5 @@
 (define-datatype continuation continuation?
+   (do2-k (bodies list?) (to-be-evaled list?) (test-exp expression?) (env box?) (k continuation?))
    (identity)
    (cons-k (value scheme-value?) (k continuation?))
    (eval-rands-k (rands (list-of scheme-value?)) (env box?) (k continuation?))
@@ -11,6 +12,8 @@
 
 (define (apply-k k val)
    (cases continuation k
+      (do2-k (bodies to-be-evaled test-exp env k)
+         (eval-exp (do2-exp bodies to-be-evaled test-exp) env k))
       (identity () val)
       (test-k (then-exp else-exp env k)
          (cases expression else-exp

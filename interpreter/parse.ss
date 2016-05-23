@@ -13,6 +13,9 @@
       ((vector? datum) (lit-exp datum))
       ((pair? datum)
          (cond
+            ((eqv? (1st datum) 'do2)
+               (let ((bodies (map parse-exp (2nd datum))))
+                  (do2-exp bodies bodies (parse-exp (4th datum)))))
             ((has-expansion? datum) (parse-exp (expand-exp datum)))
             ((eqv? (1st datum) 'quote)
                (lit-exp (2nd datum)))

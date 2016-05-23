@@ -5,6 +5,7 @@
 ;-------------------+
 
 (define-datatype expression expression?
+   (do2-exp (bodies list?) (to-be-evaled list?) (test-exp scheme-value?))
    (set!-exp (id symbol?) (assignment expression?))
    (empty-exp)
    (if-exp (comp expression?) (true expression?) (false expression?))

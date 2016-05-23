@@ -34,6 +34,10 @@
 
 (define (eval-exp exp env k)
    (cases expression exp
+      (do2-exp (bodies to-be-evaled test-exp)
+         (if (null? to-be-evaled)
+            (eval-exp (if-exp test-exp (do2-exp bodies bodies test-exp) (empty-exp)) env k)
+            (eval-exp (car to-be-evaled) env (do2-k bodies (cdr to-be-evaled) test-exp env k))))
       (set!-exp (id assignment)
          (set-box! env (replace-val env id (eval-exp assignment env (identity)))))
       (if-exp (comp true false)
