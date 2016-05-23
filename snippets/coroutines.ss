@@ -1,0 +1,21 @@
+(load "coroutine-examples.ss")
+
+(define (simple)
+	(call/cc (lambda (return)
+		(let ((co1 #f) (co2 #f))
+			(set! co1 (make-coroutine
+				(lambda (val)
+					(display (format "co1 a: ~s\n" val))
+					(set! val (resume co2 (+ 1 val)))
+					(display (format "co1 b: ~s\n" val))
+					(set! val (resume co2 (+ 1 val)))
+					;(return (resume co2 (+ 1 val))))))
+					(return val))))
+			(set! co2 (make-coroutine
+				(lambda (val)
+					(display (format "co2 a: ~s\n" val))
+					(set! val (resume co1 (+ 1 val)))
+					(display (format "co2 b: ~s\n" val))
+					(set! val (resume co1 (+ 1 val)))
+					(return val))))
+			(co1 1)))))

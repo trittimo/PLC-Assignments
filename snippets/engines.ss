@@ -1,0 +1,5 @@
+(define (simple)
+	(let loop ((eng (make-engine (lambda () (+ 1 2)))))
+		(if (procedure? eng)
+			(loop (eng 1 (lambda (t v) v) (lambda (x) x)))
+			eng)))
