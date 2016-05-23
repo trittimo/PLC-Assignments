@@ -3,5 +3,10 @@
 (define (map-cps proc ls k)
 	(if (null? ls)
 		(apply-k k '())
-		(map-cps (lambda (x)
-			(
+		(proc
+			(car ls)
+			(lambda (x)
+				(map-cps
+					proc
+					(cdr ls)
+					(lambda (y) (apply-k k (cons x y))))))))
