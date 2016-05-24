@@ -1,0 +1,17 @@
+;------------------+
+;                  |
+;       TODO       |
+;                  |
+;------------------+
+
+HIGH PRIORITY
+- CPS
+- Get rid of let-exp and replace with syntax-expansion (it's easier)
+- call/cc
+
+MEDIUM PRIORITY
+- Use make-c...r instead of mapping car, cadr, etc. directly
+
+LOW PRIORITY
+- Make datatype checks implementation independent (i.e. don't use (eq? (car type) 'lit-exp))
+- (rep) may need to display some values differently

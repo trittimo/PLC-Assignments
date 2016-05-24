@@ -1,0 +1,12 @@
+;------------------+
+;                  |
+;       TODO       |
+;                  |
+;------------------+
+
+MEDIUM PRIORITY
+- Use make-c...r instead of mapping car, cadr, etc. directly
+
+LOW PRIORITY
+- Make datatype checks implementation independent (i.e. don't use (eq? (car type) 'lit-exp))
+- (rep) may need to display some values differently
