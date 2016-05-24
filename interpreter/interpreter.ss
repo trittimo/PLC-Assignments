@@ -35,6 +35,16 @@
 
 (define (eval-exp exp env)
    (cases expression exp
+      (continue-exp ()
+         'reset-while)
+      (while-exp (test bodies)
+         (if (eval-exp test env)
+            (let loop ((todo bodies))
+               (if (null? todo)
+                  (eval-exp exp env)
+                  (if (eq? 'reset-while (eval-exp (car todo) env))
+                     (eval-exp exp env)
+                     (loop (cdr todo)))))))
       (set!-exp (id assignment)
          (set-box! env (replace-val env id (eval-exp assignment env))))
       (if-exp (comp true false)

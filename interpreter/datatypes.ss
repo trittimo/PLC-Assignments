@@ -5,6 +5,8 @@
 ;-------------------+
 
 (define-datatype expression expression?
+   (continue-exp)
+   (while-exp (test expression?) (bodies (list-of expression?)))
    (set!-exp (id symbol?) (assignment expression?))
    (named-let-exp (id symbol?) (assigned list?) (bodies list?))
    (let-exp (assigned list?) (bodies list?))
