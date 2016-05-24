@@ -13,6 +13,8 @@
       ((vector? datum) (lit-exp datum))
       ((pair? datum)
          (cond
+            ((eqv? (1st datum) 'continue) (continue-exp))
+            ((eqv? (1st datum) 'while) (while-exp (parse-exp (2nd datum)) (map parse-exp (cddr datum))))
             ((has-expansion? datum) (parse-exp (expand-exp datum)))
             ((eqv? (1st datum) 'quote)
                (lit-exp (2nd datum)))

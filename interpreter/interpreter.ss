@@ -34,6 +34,16 @@
 
 (define (eval-exp exp env k)
    (cases expression exp
+      (continue-exp ()
+         'reset-while)
+      (while-exp (test bodies)
+         (if (eval-exp test env k)
+            (let loop ((todo bodies))
+               (if (null? bodies)
+                  (eval-exp exp env k)
+                  (if (eq? 'reset-while (eval-exp (car bodies) env k))
+                     (eval-exp exp env k)
+                     (loop (cdr bodies)))))))
       (set!-exp (id assignment)
          (set-box! env (replace-val env id (eval-exp assignment env (identity)))))
       (if-exp (comp true false)

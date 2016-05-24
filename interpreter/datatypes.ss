@@ -5,6 +5,8 @@
 ;-------------------+
 
 (define-datatype expression expression?
+   (continue-exp)
+   (while-exp (test expression?) (bodies (list-of expression?)))
    (set!-exp (id symbol?) (assignment expression?))
    (empty-exp)
    (if-exp (comp expression?) (true expression?) (false expression?))
